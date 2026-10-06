@@ -16,12 +16,12 @@ A multi-tenant SaaS for small delivery services: dispatchers plan routes and sch
 
 Four roles; every staff user belongs to exactly one company (tenant), and data never crosses tenants. The company is a background entity: users belong to it, but no one creates, deletes or switches companies in the app; the Admin only edits its settings.
 
-| Role | Signs in | Can do |
-| --- | --- | --- |
-| Admin | Yes | Manage company settings, users and roles, assign couriers to dispatchers, see everything across all dispatchers, including each dispatcher’s statistics |
-| Dispatcher | Yes | Create and edit orders, pick orders from the shared pool, build routes and schedule deliveries for their own couriers, watch them on the live map, handle their accidents, see their statistics and event log; sees only the couriers the Admin assigned to them |
-| Courier | Yes | See own routes and stops, update stop statuses, share location while on shift, attach proof of delivery, report an accident |
-| Customer | No | Open a tracking link, see status, ETA and courier position on the map |
+| Role       | Signs in | Can do                                                                                                                                                                                                                                                           |
+| ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Admin      | Yes      | Manage company settings, users and roles, assign couriers to dispatchers, see everything across all dispatchers, including each dispatcher’s statistics                                                                                                          |
+| Dispatcher | Yes      | Create and edit orders, pick orders from the shared pool, build routes and schedule deliveries for their own couriers, watch them on the live map, handle their accidents, see their statistics and event log; sees only the couriers the Admin assigned to them |
+| Courier    | Yes      | See own routes and stops, update stop statuses, share location while on shift, attach proof of delivery, report an accident                                                                                                                                      |
+| Customer   | No       | Open a tracking link, see status, ETA and courier position on the map                                                                                                                                                                                            |
 
 Authorization is role-based (RBAC) and checked on the API for every request, not only in the UI. A dispatcher’s access is further scoped to their own couriers, those couriers’ routes and locations, plus the shared pool of unassigned orders.
 
@@ -131,19 +131,19 @@ Delivered and Cancelled are final. Scheduled orders stay in New until the dispat
 
 Every table except Company carries a `companyId`; all queries are scoped by it. Users, Vehicles, Orders and Routes also carry `isSample`, which marks seeded sample data so it can be hidden or deleted.
 
-| Entity | Key fields | Relations |
-| --- | --- | --- |
-| Company | name, timezone, shiftLengthMin, stopHandlingMin, settings | has many Users, Vehicles, Orders, Routes |
-| User | email, passwordHash, name, role (admin, dispatcher, courier), dispatcherId (couriers only, set by the Admin), courierStatus (available, accident) | belongs to Company; a dispatcher has many couriers; a courier belongs to one dispatcher and has many Routes |
-| Vehicle | vin, legalNumber, colour, type (bicycle, scooter, car, van); each type has a fixed max load weight and max package dimensions (lookup in packages/shared) | belongs to Company; not tied to a courier, picked per Route |
-| Order | customer name and phone, pickup and drop-off address with lat/lng, weightKg, lengthCm, widthCm, heightCm, type (asap, scheduled), pickupWindowStart, pickupWindowEnd, dropoffWindowStart, dropoffWindowEnd, status, trackingToken | has two Stops |
-| Route | courierId, vehicleId, shiftDate, status, distanceM, durationMin, geometry (cached from the routing service) | uses one Vehicle; has many Stops, ordered |
-| Stop | routeId, orderId, kind (pickup, dropoff), lat, lng (from the order, or the accident location for a re-pickup), sequence, eta, status, arrivedAt, completedAt, failReason | belongs to Route and Order |
-| CourierLocation | courierId, lat, lng, recordedAt | latest position cached in Redis; history kept for the active shift |
-| Incident | courierId, routeId, lat, lng, comment, reportedAt, resolvedAt, resolvedById | belongs to a courier (User) and the Route active at the time |
-| ProofOfDelivery | stopId, photoUrl, createdAt | belongs to Stop |
-| Notification | userId, type, payload, readAt | belongs to User |
-| Event | type, actorId (null for system), entityType, entityId, courierId, payload, createdAt; append-only | belongs to Company; points at the Order, Route, User or Incident it describes |
+| Entity          | Key fields                                                                                                                                                                                                                        | Relations                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Company         | name, timezone, shiftLengthMin, stopHandlingMin, settings                                                                                                                                                                         | has many Users, Vehicles, Orders, Routes                                                                    |
+| User            | email, passwordHash, name, role (admin, dispatcher, courier), dispatcherId (couriers only, set by the Admin), courierStatus (available, accident)                                                                                 | belongs to Company; a dispatcher has many couriers; a courier belongs to one dispatcher and has many Routes |
+| Vehicle         | vin, legalNumber, colour, type (bicycle, scooter, car, van); each type has a fixed max load weight and max package dimensions (lookup in packages/shared)                                                                         | belongs to Company; not tied to a courier, picked per Route                                                 |
+| Order           | customer name and phone, pickup and drop-off address with lat/lng, weightKg, lengthCm, widthCm, heightCm, type (asap, scheduled), pickupWindowStart, pickupWindowEnd, dropoffWindowStart, dropoffWindowEnd, status, trackingToken | has two Stops                                                                                               |
+| Route           | courierId, vehicleId, shiftDate, status, distanceM, durationMin, geometry (cached from the routing service)                                                                                                                       | uses one Vehicle; has many Stops, ordered                                                                   |
+| Stop            | routeId, orderId, kind (pickup, dropoff), lat, lng (from the order, or the accident location for a re-pickup), sequence, eta, status, arrivedAt, completedAt, failReason                                                          | belongs to Route and Order                                                                                  |
+| CourierLocation | courierId, lat, lng, recordedAt                                                                                                                                                                                                   | latest position cached in Redis; history kept for the active shift                                          |
+| Incident        | courierId, routeId, lat, lng, comment, reportedAt, resolvedAt, resolvedById                                                                                                                                                       | belongs to a courier (User) and the Route active at the time                                                |
+| ProofOfDelivery | stopId, photoUrl, createdAt                                                                                                                                                                                                       | belongs to Stop                                                                                             |
+| Notification    | userId, type, payload, readAt                                                                                                                                                                                                     | belongs to User                                                                                             |
+| Event           | type, actorId (null for system), entityType, entityId, courierId, payload, createdAt; append-only                                                                                                                                 | belongs to Company; points at the Order, Route, User or Incident it describes                               |
 
 Constraint: within a route, an order’s pickup stop sequence is lower than its drop-off stop sequence.
 
@@ -179,18 +179,18 @@ flowchart TB
 
 Next.js renders pages on the server by calling the API; the browser talks to the API directly only for real-time updates and client-side mutations. The worker shares the API’s code and database access but runs separately, so slow jobs never block requests.
 
-| Layer | Choice |
-| --- | --- |
-| Monorepo | pnpm workspaces: `apps/web`, `apps/api`, `apps/worker`, `apps/e2e`, `packages/shared` |
-| Web | Next.js (App Router, Server Components), TypeScript, TanStack Query for client data, Tailwind, Leaflet + OpenStreetMap |
-| Charts | Recharts (React, TypeScript): donut and stacked bar chart on the statistics page |
-| API | Node.js, Express, TypeScript, Zod, Socket.IO, pino |
-| Data | PostgreSQL + Prisma; Redis for latest courier positions, Socket.IO adapter and queues |
-| Routing | OpenRouteService free tier: road geometry, distance and travel time per vehicle profile (car and van use driving; bicycle uses cycling; scooter uses driving with highways avoided and travel time multiplied by a slowdown factor, 1.3 by default, since scooters may not use bike lanes); behind a RoutingProvider interface so self-hosted OSRM in Docker can replace it |
-| Jobs | BullMQ (delayed jobs for scheduled reminders, courier simulator, nightly demo reset) |
-| Local | Docker Compose for Postgres and Redis |
-| Testing | Vitest, Supertest, Playwright (UI e2e and black-box API tests) |
-| CI/CD | GitHub Actions |
+| Layer    | Choice                                                                                                                                                                                                                                                                                                                                                                      |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo | pnpm workspaces: `apps/web`, `apps/api`, `apps/worker`, `apps/e2e`, `packages/shared`                                                                                                                                                                                                                                                                                       |
+| Web      | Next.js (App Router, Server Components), TypeScript, TanStack Query for client data, Tailwind, Leaflet + OpenStreetMap                                                                                                                                                                                                                                                      |
+| Charts   | Recharts (React, TypeScript): donut and stacked bar chart on the statistics page                                                                                                                                                                                                                                                                                            |
+| API      | Node.js, Express, TypeScript, Zod, Socket.IO, pino                                                                                                                                                                                                                                                                                                                          |
+| Data     | PostgreSQL + Prisma; Redis for latest courier positions, Socket.IO adapter and queues                                                                                                                                                                                                                                                                                       |
+| Routing  | OpenRouteService free tier: road geometry, distance and travel time per vehicle profile (car and van use driving; bicycle uses cycling; scooter uses driving with highways avoided and travel time multiplied by a slowdown factor, 1.3 by default, since scooters may not use bike lanes); behind a RoutingProvider interface so self-hosted OSRM in Docker can replace it |
+| Jobs     | BullMQ (delayed jobs for scheduled reminders, courier simulator, nightly demo reset)                                                                                                                                                                                                                                                                                        |
+| Local    | Docker Compose for Postgres and Redis                                                                                                                                                                                                                                                                                                                                       |
+| Testing  | Vitest, Supertest, Playwright (UI e2e and black-box API tests)                                                                                                                                                                                                                                                                                                              |
+| CI/CD    | GitHub Actions                                                                                                                                                                                                                                                                                                                                                              |
 
 ## API design
 
@@ -200,31 +200,31 @@ REST over JSON, versioned under `/api/v1`, documented with OpenAPI (Swagger UI a
 
 **Resources**
 
-| Resource | Main endpoints |
-| --- | --- |
-| Auth | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` |
-| Users | `GET /users`, `POST /users/invite`, `PATCH /users/:id` |
-| Vehicles | `GET /vehicles`, `POST /vehicles`, `PATCH /vehicles/:id` |
-| Orders | `GET /orders`, `POST /orders`, `GET /orders/:id`, `PATCH /orders/:id`, `POST /orders/:id/cancel` |
-| Routes | `GET /routes?date=`, `POST /routes`, `GET /routes/:id`, `PUT /routes/:id/stops` (assign and reorder) |
-| Stops | `POST /stops/:id/arrive`, `POST /stops/:id/complete`, `POST /stops/:id/fail`, `POST /stops/:id/proof` |
-| Couriers | `POST /couriers/me/shift/start`, `POST /couriers/me/shift/end` |
-| Accidents | `POST /couriers/me/accident`, `POST /couriers/:id/accident/resolve`, `POST /orders/:id/fail` (for orders on hold) |
-| Tracking | `GET /track/:token` (public) |
-| Notifications | `GET /notifications`, `POST /notifications/:id/read` |
-| Statistics | `GET /stats/today`, `GET /stats/week` (the week includes a per-day breakdown for the chart; a dispatcher gets their own numbers; the Admin passes `?dispatcherId=`) |
-| Events | `GET /events?type=&courierId=&orderId=&from=&to=` (paginated) |
+| Resource      | Main endpoints                                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth          | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`                                                                                       |
+| Users         | `GET /users`, `POST /users/invite`, `PATCH /users/:id`                                                                                                              |
+| Vehicles      | `GET /vehicles`, `POST /vehicles`, `PATCH /vehicles/:id`                                                                                                            |
+| Orders        | `GET /orders`, `POST /orders`, `GET /orders/:id`, `PATCH /orders/:id`, `POST /orders/:id/cancel`                                                                    |
+| Routes        | `GET /routes?date=`, `POST /routes`, `GET /routes/:id`, `PUT /routes/:id/stops` (assign and reorder)                                                                |
+| Stops         | `POST /stops/:id/arrive`, `POST /stops/:id/complete`, `POST /stops/:id/fail`, `POST /stops/:id/proof`                                                               |
+| Couriers      | `POST /couriers/me/shift/start`, `POST /couriers/me/shift/end`                                                                                                      |
+| Accidents     | `POST /couriers/me/accident`, `POST /couriers/:id/accident/resolve`, `POST /orders/:id/fail` (for orders on hold)                                                   |
+| Tracking      | `GET /track/:token` (public)                                                                                                                                        |
+| Notifications | `GET /notifications`, `POST /notifications/:id/read`                                                                                                                |
+| Statistics    | `GET /stats/today`, `GET /stats/week` (the week includes a per-day breakdown for the chart; a dispatcher gets their own numbers; the Admin passes `?dispatcherId=`) |
+| Events        | `GET /events?type=&courierId=&orderId=&from=&to=` (paginated)                                                                                                       |
 
 **Real-time events (Socket.IO rooms per company and per order)**
 
-| Event | Direction | Payload |
-| --- | --- | --- |
-| `courier:location` | courier → server | lat, lng, timestamp |
-| `courier:moved` | server → dispatchers, tracking page | courierId, lat, lng |
-| `stop:updated` | server → dispatchers, tracking page | stopId, status, eta |
-| `route:updated` | server → dispatchers, courier | routeId, stops |
-| `notification:new` | server → user | notification |
-| `courier:accident` | server → dispatchers | courierId, incidentId, lat, lng, affected orderIds |
+| Event              | Direction                           | Payload                                            |
+| ------------------ | ----------------------------------- | -------------------------------------------------- |
+| `courier:location` | courier → server                    | lat, lng, timestamp                                |
+| `courier:moved`    | server → dispatchers, tracking page | courierId, lat, lng                                |
+| `stop:updated`     | server → dispatchers, tracking page | stopId, status, eta                                |
+| `route:updated`    | server → dispatchers, courier       | routeId, stops                                     |
+| `notification:new` | server → user                       | notification                                       |
+| `courier:accident` | server → dispatchers                | courierId, incidentId, lat, lng, affected orderIds |
 
 Request and response schemas live in a shared package (Zod) and are used for validation on the API, form validation in the web app and OpenAPI generation.
 

@@ -6,7 +6,10 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "prepare": "husky"
   },
   "devEngines": {
     "packageManager": {
@@ -15,5 +18,12 @@
       "onFail": "download"
     }
   },
-  "packageManager": "pnpm@12.9.1"
+  "packageManager": "pnpm@12.9.1",
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.9"
+  }
 }
