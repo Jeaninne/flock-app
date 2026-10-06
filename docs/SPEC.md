@@ -204,6 +204,7 @@ REST over JSON, versioned under `/api/v1`, documented with OpenAPI (Swagger UI a
 | --- | --- |
 | Auth | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` |
 | Users | `GET /users`, `POST /users/invite`, `PATCH /users/:id` |
+| Vehicles | `GET /vehicles`, `POST /vehicles`, `PATCH /vehicles/:id` |
 | Orders | `GET /orders`, `POST /orders`, `GET /orders/:id`, `PATCH /orders/:id`, `POST /orders/:id/cancel` |
 | Routes | `GET /routes?date=`, `POST /routes`, `GET /routes/:id`, `PUT /routes/:id/stops` (assign and reorder) |
 | Stops | `POST /stops/:id/arrive`, `POST /stops/:id/complete`, `POST /stops/:id/fail`, `POST /stops/:id/proof` |
@@ -250,7 +251,7 @@ The bar is “could be shown to a client”: secure by default, tested, deployed
 Six milestones at about two hours a day; after milestone 4 the project is deployed and goes on the CV. Each milestone becomes an epic in the backlog ([GitHub Issues](https://github.com/Jeaninne/flock-app/issues)).
 
 1. **Foundation:** monorepo, Docker Compose (Postgres, Redis), Express skeleton with error handling and logging, Prisma schema and migrations, seed script, CI with lint and type check
-2. **Auth and orders:** JWT auth with refresh, company provisioning script, RBAC, user invites, orders CRUD with geocoding, Next.js dashboard with server-rendered order list and filters, OpenAPI docs, Playwright framework and its CI job
+2. **Auth and orders:** JWT auth with refresh, company provisioning script, RBAC, user invites, couriers assigned to dispatchers, vehicles, orders CRUD with geocoding, Next.js dashboard with server-rendered order list and filters, OpenAPI docs, Playwright framework and its CI job
 3. **Routes and scheduling:** routes with ordered stops, drag-and-drop stop ordering, routing service integration (road geometry, ETA, shift-length check), planning board by day, scheduled orders, BullMQ reminder jobs, black-box API tests
 4. **Real-time and courier app:** Socket.IO, courier location sharing, dispatcher live map (Leaflet), courier mobile view with stop actions, public tracking page, courier simulator, deploy to production, Playwright e2e for key flows
 5. **Operations:** accident reporting with On hold and reassignment, event log with filters, statistics page with Recharts charts, Admin’s dispatcher filter
