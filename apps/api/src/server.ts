@@ -1,10 +1,9 @@
 import { createApp } from './app.js';
 import { logger } from './lib/logger.js';
+import { env } from './lib/env.js';
 
-const port = Number(process.env.PORT ?? 4000);
-
-const server = createApp().listen(port, () => {
-  logger.info(`API listening on http://localhost:${port}`);
+const server = createApp().listen(env.PORT, () => {
+  logger.info(`API listening on http://localhost:${env.PORT}`);
 });
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;

@@ -1,8 +1,8 @@
 import { pino } from 'pino';
-import { isDev } from './env.js';
+import { env, isDev } from './env.js';
 
 export const logger = pino({
-  level: process.env.LOG_LEVEL ?? (isDev ? 'debug' : 'info'),
+  level: env.LOG_LEVEL ?? (isDev ? 'debug' : 'info'),
   ...(isDev && {
     transport: {
       target: 'pino-pretty',
