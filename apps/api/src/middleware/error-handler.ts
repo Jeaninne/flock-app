@@ -1,4 +1,4 @@
-import type { ErrorRequestHandler } from 'express';
+import type { ErrorRequestHandler, Response } from 'express';
 import { AppError, type ErrorCode } from '../lib/app-error.js';
 import { isDev } from '../lib/env.js';
 
@@ -25,6 +25,15 @@ const clientMessage = (err: HttpError) => {
   return err.expose ? err.message : 'Bad request';
 };
 
+const send = (res: Response, status: number, body: unknown) => {
+  try {
+    res.status(status).json(body);
+  } catch (serializeErr) {
+    res.err = serializeErr as Error;
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' } });
+  }
+};
+
 export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
   if (res.headersSent) {
     next(err);
@@ -33,21 +42,21 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
 
   if (err instanceof AppError) {
     if (err.status >= 500) res.err = err;
-    res.status(err.status).json({
+    send(res, err.status, {
       error: { code: err.code, message: err.message, details: err.details },
     });
     return;
   }
 
   if (isClientHttpError(err)) {
-    res.status(err.status).json({
+    send(res, err.status, {
       error: { code: codeByStatus[err.status] ?? 'BAD_REQUEST', message: clientMessage(err) },
     });
     return;
   }
 
   res.err = err;
-  res.status(500).json({
+  send(res, 500, {
     error: {
       code: 'INTERNAL_ERROR',
       message: isDev ? String(err?.message ?? err) : 'Something went wrong',
