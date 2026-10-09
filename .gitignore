@@ -4,6 +4,8 @@ dist
 coverage
 *.tsbuildinfo
 
+apps/api/src/generated
+
 .env
 .env.*
 !.env.example

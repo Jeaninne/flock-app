@@ -1,0 +1,77 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  DISPATCHER
+  COURIER
+
+  @@map("user_role")
+}
+
+enum VehicleType {
+  BICYCLE
+  SCOOTER
+  CAR
+  VAN
+
+  @@map("vehicle_type")
+}
+
+enum CourierStatus {
+  AVAILABLE
+  ACCIDENT
+
+  @@map("courier_status")
+}
+
+enum OrderType {
+  ASAP
+  SCHEDULED
+
+  @@map("order_type")
+}
+
+enum OrderStatus {
+  NEW
+  ASSIGNED
+  PICKED_UP
+  ON_HOLD
+  DELIVERED
+  FAILED
+  CANCELLED
+
+  @@map("order_status")
+}
+
+enum RouteStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+
+  @@map("route_status")
+}
+
+enum StopKind {
+  PICKUP
+  DROPOFF
+
+  @@map("stop_kind")
+}
+
+enum StopStatus {
+  PENDING
+  ARRIVED
+  COMPLETED
+  FAILED
+
+  @@map("stop_status")
+}
