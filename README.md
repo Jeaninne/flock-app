@@ -13,9 +13,9 @@ cp apps/api/.env.example apps/api/.env           # Windows: Copy-Item
 pnpm dev                                         # web on :3000, API on :4000
 ```
 
-| Service    | URL                            |
-| ---------- | ------------------------------ |
-| Web        | http://localhost:3000          |
-| API        | http://localhost:4000/api/v1   |
-| PostgreSQL | localhost:5432 (flock / flock) |
-| Redis      | localhost:6379                 |
+| Service    | URL                                      |
+| ---------- | ---------------------------------------- |
+| Web        | http://localhost:3000                    |
+| API        | http://localhost:4000/api/v1             |
+| PostgreSQL | localhost:5432 (flock_admin / flock_dev) |
+| Redis      | localhost:6379                           |
