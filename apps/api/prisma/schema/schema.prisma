@@ -1,0 +1,67 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  name               String
+  timezone           String   @default("Europe/Kyiv")
+  shiftLengthMin     Int      @default(480) @map("shift_length_min")
+  pickupHandlingMin  Int      @default(5) @map("pickup_handling_min")
+  dropoffHandlingMin Int      @default(10) @map("dropoff_handling_min")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  vehicles Vehicle[]
+  users    User[]
+
+  @@map("companies")
+}
+
+model User {
+  id            String         @id @default(uuid(7)) @db.Uuid
+  companyId     String         @map("company_id") @db.Uuid
+  name          String
+  role          UserRole
+  email         String         @unique // in future can be @@unique([companyId, email]) + tenant selection
+  passwordHash  String?        @map("password_hash")
+  dispatcherId  String?        @map("dispatcher_id") @db.Uuid
+  courierStatus CourierStatus? @map("courier_status")
+  isSample      Boolean        @default(false) @map("is_sample")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  dispatcher User?   @relation("DispatcherCouriers", fields: [dispatcherId], references: [id], onDelete: SetNull)
+  couriers   User[]  @relation("DispatcherCouriers")
+
+  @@index([companyId, role])
+  @@index([dispatcherId])
+  @@map("users")
+}
+
+model Vehicle {
+  id          String      @id @default(uuid(7)) @db.Uuid
+  companyId   String      @map("company_id") @db.Uuid
+  type        VehicleType
+  vin         String
+  legalNumber String      @map("legal_number")
+  color       String
+  isSample    Boolean     @default(false) @map("is_sample")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, vin])
+  @@unique([companyId, legalNumber])
+  @@index([companyId, type])
+  @@map("vehicles")
+}
