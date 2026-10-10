@@ -21,6 +21,8 @@ model Company {
 
   vehicles Vehicle[]
   users    User[]
+  orders   Order[]
+  routes   Route[]
 
   @@map("companies")
 }
@@ -30,7 +32,7 @@ model User {
   companyId     String         @map("company_id") @db.Uuid
   name          String
   role          UserRole
-  email         String         @unique // in future can be @@unique([companyId, email]) + tenant selection
+  email         String         @unique /// in future can be @@unique([companyId, email]) + tenant selection
   passwordHash  String?        @map("password_hash")
   dispatcherId  String?        @map("dispatcher_id") @db.Uuid
   courierStatus CourierStatus? @map("courier_status")
@@ -64,4 +66,93 @@ model Vehicle {
   @@unique([companyId, legalNumber])
   @@index([companyId, type])
   @@map("vehicles")
+}
+
+model Order {
+  id                 String      @id @default(uuid(7)) @db.Uuid
+  companyId          String      @map("company_id") @db.Uuid
+  /// Package weight in grams
+  weight             Int
+  /// Package size in cm
+  length             Int
+  width              Int
+  height             Int
+  /// pickup info
+  pickupName         String      @map("pickup_name")
+  pickupPhone        String      @map("pickup_phone")
+  pickupWindowStart  DateTime?   @map("pickup_window_start") @db.Timestamptz
+  pickupWindowEnd    DateTime?   @map("pickup_window_end") @db.Timestamptz
+  pickupLat          Float       @map("pickup_lat")
+  pickupLng          Float       @map("pickup_lng")
+  /// dropoff info
+  dropoffName        String      @map("dropoff_name")
+  dropoffPhone       String      @map("dropoff_phone")
+  dropoffWindowStart DateTime?   @map("dropoff_window_start") @db.Timestamptz
+  dropoffWindowEnd   DateTime?   @map("dropoff_window_end") @db.Timestamptz
+  dropoffLat         Float       @map("dropoff_lat")
+  dropoffLng         Float       @map("dropoff_lng")
+  trackingToken      String      @unique @map("tracking_token")
+  type               OrderType
+  status             OrderStatus @default(NEW)
+  isSample           Boolean     @default(false) @map("is_sample")
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("orders")
+}
+
+model Route {
+  id        String      @id @default(uuid(7)) @db.Uuid
+  companyId String      @map("company_id") @db.Uuid
+  courierId String      @map("courier_id") @db.Uuid
+  vehicleId String      @map("vehicle_id") @db.Uuid
+  shiftDate DateTime    @map("shift_date") @db.Date
+  status    RouteStatus
+  /// Distance in m
+  distance  Float
+  /// Duration in min
+  duration  Int
+  isSample  Boolean     @default(false) @map("is_sample")
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("routes")
+}
+
+model Stop {
+  id          String     @id @default(uuid(7)) @db.Uuid
+  companyId   String     @map("company_id") @db.Uuid
+  routeId     String     @map("route_id") @db.Uuid
+  orderId     String     @map("order_id") @db.Uuid
+  type        StopType
+  lat         Float
+  lng         Float
+  status      StopStatus
+  arrivedAt   DateTime?  @map("arrived_at") @db.Timestamptz
+  completedAt DateTime?  @map("completed_at") @db.Timestamptz
+  failReason  String?    @map("fail_reason")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("stops")
+}
+
+model Incident {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+}
+
+model Notification {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+}
+
+model Event {
+  id String @id @default(uuid(7)) @db.Uuid
 }

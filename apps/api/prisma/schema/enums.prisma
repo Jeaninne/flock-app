@@ -49,11 +49,11 @@ enum RouteStatus {
   @@map("route_status")
 }
 
-enum StopKind {
+enum StopType {
   PICKUP
   DROPOFF
 
-  @@map("stop_kind")
+  @@map("stop_type")
 }
 
 enum StopStatus {
