@@ -55,7 +55,7 @@ model User {
   @@map("users")
 }
 
-// CHECK constraints: see migration3 init
+// CHECK constraints: see migration init
 /// Soft-deleted via deletedAt, never hard-deleted
 model Vehicle {
   id          String      @id @default(uuid(7)) @db.Uuid

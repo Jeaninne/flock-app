@@ -242,7 +242,7 @@ ALTER TABLE "vehicles"
             OR "type" = 'SCOOTER'
         );
 
--- Orders: ASAP has no time windows, SCHEDULED has all four; package weight and size within the largest vehicle (van); valid coordinates
+-- Orders: ASAP has no time windows, SCHEDULED has all four; package weight and size within sanity bounds; valid coordinates
 ALTER TABLE "orders"
     ADD CONSTRAINT "orders_windows_match_type" CHECK (
         ("type" = 'ASAP'
