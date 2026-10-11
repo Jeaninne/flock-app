@@ -45,6 +45,14 @@ The core is orders grouped into courier routes; everything else (scheduling, tra
 - Unassigned orders form a shared pool that every dispatcher in the company sees and picks from; once an order is on a route, only that courier’s dispatcher (and the Admin) sees it
 - Order list with server-side filtering, sorting, search and pagination
 
+**Removing users and vehicles**
+
+- Users and vehicles are never hard-deleted: removal is a soft delete that sets `deletedAt`, so routes, stops and statistics that reference them stay intact
+- A courier cannot be removed while they have a planned or active route; the dispatcher reassigns or finishes those orders first
+- A vehicle cannot be removed (decommissioned) while it is used by a planned or active route; past routes keep pointing at it
+- On removal a user's personal data is wiped (name replaced with "Deleted user", email replaced with a unique placeholder so the address can be invited again, password hash cleared); the row itself stays
+- A dispatcher cannot be removed while any of their couriers has a planned or active route; the Admin first reassigns those couriers to other dispatchers (their routes move with them). Remaining couriers are unassigned automatically on removal. The check and the removal run in one transaction that locks the dispatcher row, so a courier or route cannot be assigned to the dispatcher concurrently
+
 **Routes: several deliveries per courier**
 
 - A route belongs to one courier and one vehicle for one shift (a courier is not tied to a vehicle and can use a bicycle, scooter or car on different shifts) and holds an ordered list of stops
@@ -95,7 +103,7 @@ The core is orders grouped into courier routes; everything else (scheduling, tra
 
 **Event log**
 
-- Every meaningful action is written to an append-only log: order created, edited, cancelled; order assigned, reassigned or returned to the pool; stop arrived, delivered, failed; shift started and ended; accident reported and cleared; courier assigned to a dispatcher; user invited
+- Every meaningful action is written to an append-only log: order created, edited, cancelled; order assigned, reassigned or returned to the pool; stop arrived, delivered, failed; shift started and ended; accident reported and cleared; courier assigned to a dispatcher; user invited, user removed; vehicle decommissioned
 - Each entry records who did it (user or system), when, what it applies to (order, courier, route) and the details
 - Event log page with filters by type, courier, order and date range; accidents can be shown on their own
 - Admin sees the whole company’s log; a dispatcher sees events about their own couriers and orders in the shared pool
@@ -129,7 +137,7 @@ Delivered and Cancelled are final. Scheduled orders stay in New until the dispat
 
 ## Data model
 
-Every table except Company carries a `companyId`; all queries are scoped by it. Users, Vehicles, Orders and Routes also carry `isSample`, which marks seeded sample data so it can be hidden or deleted.
+Every table except Company carries a `companyId`; all queries are scoped by it. Users, Vehicles, Orders and Routes also carry `isSample`, which marks seeded sample data so it can be hidden or deleted. Users and Vehicles also carry `deletedAt` (soft delete): removed rows stay in the database for history and are excluded from lists and pickers.
 
 | Entity          | Key fields                                                                                                                                                                                                                                 | Relations                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
@@ -203,8 +211,8 @@ REST over JSON, versioned under `/api/v1`, documented with OpenAPI (Swagger UI a
 | Resource      | Main endpoints                                                                                                                                                      |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Auth          | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`                                                                                       |
-| Users         | `GET /users`, `POST /users/invite`, `PATCH /users/:id`                                                                                                              |
-| Vehicles      | `GET /vehicles`, `POST /vehicles`, `PATCH /vehicles/:id`                                                                                                            |
+| Users         | `GET /users`, `POST /users/invite`, `PATCH /users/:id`, `DELETE /users/:id` (soft delete)                                                                           |
+| Vehicles      | `GET /vehicles`, `POST /vehicles`, `PATCH /vehicles/:id`, `DELETE /vehicles/:id` (soft delete)                                                                      |
 | Orders        | `GET /orders`, `POST /orders`, `GET /orders/:id`, `PATCH /orders/:id`, `POST /orders/:id/cancel`                                                                    |
 | Routes        | `GET /routes?date=`, `POST /routes`, `GET /routes/:id`, `PUT /routes/:id/stops` (assign and reorder)                                                                |
 | Stops         | `POST /stops/:id/arrive`, `POST /stops/:id/complete`, `POST /stops/:id/fail`, `POST /stops/:id/proof`                                                               |

@@ -28,18 +28,20 @@ model Company {
   @@map("companies")
 }
 
+/// Soft-deleted via deletedAt, never hard-deleted
 model User {
   id            String         @id @default(uuid(7)) @db.Uuid
   companyId     String         @map("company_id") @db.Uuid
   name          String
   role          UserRole
-  email         String         @unique /// in future can be @@unique([companyId, email]) + tenant selection
+  email         String         @unique // in future can be @@unique([companyId, email]) + tenant selection
   passwordHash  String?        @map("password_hash")
   dispatcherId  String?        @map("dispatcher_id") @db.Uuid
   courierStatus CourierStatus? @map("courier_status")
   isSample      Boolean        @default(false) @map("is_sample")
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt     DateTime?      @map("deleted_at") @db.Timestamptz
 
   company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   dispatcher User?   @relation("DispatcherCouriers", fields: [dispatcherId], references: [id], onDelete: SetNull)
@@ -51,6 +53,7 @@ model User {
   @@map("users")
 }
 
+/// Soft-deleted via deletedAt, never hard-deleted
 model Vehicle {
   id          String      @id @default(uuid(7)) @db.Uuid
   companyId   String      @map("company_id") @db.Uuid
@@ -61,6 +64,7 @@ model Vehicle {
   isSample    Boolean     @default(false) @map("is_sample")
   createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime?   @map("deleted_at") @db.Timestamptz
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -81,7 +85,7 @@ model Order {
   length             Int
   width              Int
   height             Int
-  /// pickup info
+  // pickup info
   pickupName         String      @map("pickup_name")
   pickupPhone        String      @map("pickup_phone")
   pickupWindowStart  DateTime?   @map("pickup_window_start") @db.Timestamptz
@@ -90,7 +94,7 @@ model Order {
   pickupComment      String?     @map("pickup_comment")
   pickupLat          Float       @map("pickup_lat")
   pickupLng          Float       @map("pickup_lng")
-  /// dropoff info
+  // dropoff info
   dropoffName        String      @map("dropoff_name")
   dropoffPhone       String      @map("dropoff_phone")
   dropoffWindowStart DateTime?   @map("dropoff_window_start") @db.Timestamptz
@@ -122,7 +126,7 @@ model Route {
   shiftDate DateTime    @map("shift_date") @db.Date
   status    RouteStatus @default(PLANNED)
   /// Distance in m
-  distance  Float?
+  distance  Int?
   /// Duration in min
   duration  Int?
   isSample  Boolean     @default(false) @map("is_sample")
@@ -130,8 +134,8 @@ model Route {
   updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  courier User    @relation(fields: [courierId], references: [id])
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  courier User    @relation(fields: [courierId], references: [id], onDelete: NoAction)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: NoAction)
 
   stops Stop[]
 
@@ -159,7 +163,7 @@ model Stop {
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   route   Route   @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  order   Order   @relation(fields: [orderId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: NoAction)
 
   @@unique([routeId, orderId, type])
   @@unique([routeId, sequence])
