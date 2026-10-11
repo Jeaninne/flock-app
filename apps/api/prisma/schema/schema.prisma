@@ -83,9 +83,12 @@ model Order {
   weight             Int
   /// Package size in cm
   length             Int
+  /// Package size in cm
   width              Int
+  /// Package size in cm
   height             Int
   // pickup info
+  /// Contact person at pickup
   pickupName         String      @map("pickup_name")
   pickupPhone        String      @map("pickup_phone")
   pickupWindowStart  DateTime?   @map("pickup_window_start") @db.Timestamptz
@@ -95,6 +98,7 @@ model Order {
   pickupLat          Float       @map("pickup_lat")
   pickupLng          Float       @map("pickup_lng")
   // dropoff info
+  /// Contact person at dropoff
   dropoffName        String      @map("dropoff_name")
   dropoffPhone       String      @map("dropoff_phone")
   dropoffWindowStart DateTime?   @map("dropoff_window_start") @db.Timestamptz
@@ -134,8 +138,8 @@ model Route {
   updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  courier User    @relation(fields: [courierId], references: [id], onDelete: NoAction)
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: NoAction)
+  courier User    @relation(fields: [courierId], references: [id], onDelete: Restrict)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
 
   stops Stop[]
 
@@ -163,7 +167,7 @@ model Stop {
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   route   Route   @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: NoAction)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   @@unique([routeId, orderId, type])
   @@unique([routeId, sequence])
