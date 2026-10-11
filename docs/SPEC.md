@@ -139,25 +139,61 @@ Delivered and Cancelled are final. Scheduled orders stay in New until the dispat
 
 Every table except Company carries a `companyId`; all queries are scoped by it. Users, Vehicles, Orders and Routes also carry `isSample`, which marks seeded sample data so it can be hidden or deleted. Users and Vehicles also carry `deletedAt` (soft delete): removed rows stay in the database for history and are excluded from lists and pickers.
 
-| Entity          | Key fields                                                                                                                                                                                                                                 | Relations                                                                                                   |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| Company         | name, timezone, shiftLengthMin, pickupHandlingMin, dropoffHandlingMin                                                                                                                                                                      | has many Users, Vehicles, Orders, Routes                                                                    |
-| User            | email, passwordHash, name, role (admin, dispatcher, courier), dispatcherId (couriers only, set by the Admin), courierStatus (available, accident)                                                                                          | belongs to Company; a dispatcher has many couriers; a courier belongs to one dispatcher and has many Routes |
-| Vehicle         | vin, legalNumber, color, type (bicycle, scooter, car, van); each type has a fixed max load weight and max package dimensions (lookup in packages/shared)                                                                                   | belongs to Company; not tied to a courier, picked per Route                                                 |
-| Order           | customer name and phone, pickup and drop-off address with lat/lng, weightKg, length (cm), width (cm), height (cm), type (asap, scheduled), pickupWindowStart, pickupWindowEnd, dropoffWindowStart, dropoffWindowEnd, status, trackingToken | has two Stops                                                                                               |
-| Route           | courierId, vehicleId, shiftDate, status, distance, duration, geometry (cached from the routing service)                                                                                                                                    | uses one Vehicle; has many Stops, ordered                                                                   |
-| Stop            | routeId, orderId, type (pickup, dropoff), lat, lng (from the order, or the accident location for a re-pickup), sequence, eta (check in M3), status, arrivedAt, completedAt, failReason                                                     | belongs to Route and Order                                                                                  |
-| CourierLocation | courierId, lat, lng, recordedAt                                                                                                                                                                                                            | latest position cached in Redis; history kept for the active shift                                          |
-| Incident        | courierId, routeId, lat, lng, comment, reportedAt, resolvedAt, resolvedById                                                                                                                                                                | belongs to a courier (User) and the Route active at the time                                                |
-| ProofOfDelivery | stopId, photoUrl, createdAt                                                                                                                                                                                                                | belongs to Stop                                                                                             |
-| Notification    | userId, eventId, readAt, createdAt                                                                                                                                                                                                         | belongs to User                                                                                             |
-| Event           | type, actorId (null for system), entityType, entityId, courierId, payload, createdAt; append-only                                                                                                                                          | belongs to Company; points at the Order, Route, User or Incident it describes                               |
+| Entity          | Key fields                                                                                                                                                                                                                                   | Relations                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Company         | name, timezone, shiftLengthMin, pickupHandlingMin, dropoffHandlingMin                                                                                                                                                                        | has many Users, Vehicles, Orders, Routes                                                                    |
+| User            | email, passwordHash, name, role (admin, dispatcher, courier), dispatcherId (couriers only, set by the Admin), courierStatus (available, accident)                                                                                            | belongs to Company; a dispatcher has many couriers; a courier belongs to one dispatcher and has many Routes |
+| Vehicle         | vin, legalNumber (required for car and van, optional for scooter, empty for bicycle), color, type (bicycle, scooter, car, van); each type has a fixed max load weight and max package dimensions (lookup in packages/shared)                 | belongs to Company; not tied to a courier, picked per Route                                                 |
+| Order           | customer name and phone, pickup and drop-off address with lat/lng, weight (g), length (cm), width (cm), height (cm), type (asap, scheduled), pickupWindowStart, pickupWindowEnd, dropoffWindowStart, dropoffWindowEnd, status, trackingToken | has two Stops                                                                                               |
+| Route           | courierId, vehicleId, shiftDate, status, distance, duration, geometry (cached from the routing service)                                                                                                                                      | uses one Vehicle; has many Stops, ordered                                                                   |
+| Stop            | routeId, orderId, type (pickup, dropoff), lat, lng (from the order, or the accident location for a re-pickup), sequence, eta (check in M3), status, arrivedAt, completedAt, failReason                                                       | belongs to Route and Order                                                                                  |
+| CourierLocation | courierId, lat, lng, recordedAt                                                                                                                                                                                                              | latest position cached in Redis; history kept for the active shift                                          |
+| Incident        | courierId, routeId, lat, lng, comment, reportedAt, resolvedAt, resolvedById                                                                                                                                                                  | belongs to a courier (User) and the Route active at the time                                                |
+| ProofOfDelivery | stopId, photoUrl, createdAt                                                                                                                                                                                                                  | belongs to Stop                                                                                             |
+| Notification    | userId, eventId, readAt, createdAt                                                                                                                                                                                                           | belongs to User                                                                                             |
+| Event           | type, actorId (null for system), entityType, entityId, courierId, payload, createdAt; append-only                                                                                                                                            | belongs to Company; points at the Order, Route, User or Incident it describes                               |
 
 Constraint: within a route, an order’s pickup stop sequence is lower than its drop-off stop sequence.
 
 Constraint: the total weight of orders on a route must not exceed the max load of its vehicle type, and every order must fit within that type's max package dimensions; the API rejects an assignment that breaks either rule.
 
 Constraint: a route’s durationMin (travel time from the routing service plus stopHandlingMin per stop) is at most the company’s shiftLengthMin; deliveries spanning more than one day are not supported.
+
+**Field constraints**
+
+Text limits are enforced by the database (column length and CHECK constraints) and repeated in the API validation, so users get a readable error instead of a database one.
+Required text cannot be blank or whitespace only; optional text is stored as NULL rather than an empty string. Limits count characters, not bytes.
+
+| Field                                  | Max length | Rule                                                              |
+| -------------------------------------- | ---------- | ----------------------------------------------------------------- |
+| Company name                           | 100        | required                                                          |
+| Company timezone                       | 64         | required, IANA name (for example Europe/Kyiv)                     |
+| User name                              | 100        | required                                                          |
+| User email                             | 254        | required, stored lower-case, unique                               |
+| Vehicle VIN                            | 17         | required for car and van, optional for scooter, empty for bicycle |
+| Vehicle legal number                   | 10         | same as VIN                                                       |
+| Vehicle color                          | 30         | required                                                          |
+| Order pickup and drop-off contact name | 100        | required                                                          |
+| Order pickup and drop-off phone        | 20         | required                                                          |
+| Order pickup and drop-off address      | 500        | required                                                          |
+| Order pickup and drop-off comment      | 500        | optional                                                          |
+| Stop fail reason                       | 500        | required when the stop is failed                                  |
+
+Package size and weight are integers in the smallest unit (grams and centimetres). The database only rejects values beyond the largest vehicle type (van); the per-type limits below are checked by the API when an order is put on a route.
+
+| Field                       | Range              | Rule                                                                                        |
+| --------------------------- | ------------------ | ------------------------------------------------------------------------------------------- |
+| Order weight                | 1 g to 1,000,000 g | the total weight of orders on a route must not exceed the vehicle type's max load           |
+| Order length, width, height | 1 to 300 cm        | must fit the vehicle type's max package size in any orientation (sides are compared sorted) |
+
+**Vehicle type limits** (lookup in packages/shared)
+
+| Type    | Max load | Max package size (L × W × H) | Based on                 |
+| ------- | -------- | ---------------------------- | ------------------------ |
+| bicycle | 10 kg    | 50 × 40 × 40 cm              | courier thermal backpack |
+| scooter | 20 kg    | 60 × 45 × 45 cm              | moped top box            |
+| car     | 50 kg    | 120 × 80 × 60 cm             | passenger car trunk      |
+| van     | 1000 kg  | 300 × 170 × 170 cm           | cargo van                |
 
 ## Architecture and tech stack
 

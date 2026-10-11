@@ -25,8 +25,8 @@ CREATE TYPE "stop_status" AS ENUM ('PENDING', 'ARRIVED', 'COMPLETED', 'FAILED');
 -- CreateTable
 CREATE TABLE "companies" (
     "id" UUID NOT NULL,
-    "name" TEXT NOT NULL,
-    "timezone" TEXT NOT NULL DEFAULT 'Europe/Kyiv',
+    "name" VARCHAR(100) NOT NULL,
+    "timezone" VARCHAR(64) NOT NULL DEFAULT 'Europe/Kyiv',
     "shift_length_min" INTEGER NOT NULL DEFAULT 480,
     "pickup_handling_min" INTEGER NOT NULL DEFAULT 5,
     "dropoff_handling_min" INTEGER NOT NULL DEFAULT 10,
@@ -40,9 +40,9 @@ CREATE TABLE "companies" (
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
     "company_id" UUID NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" VARCHAR(100) NOT NULL,
     "role" "user_role" NOT NULL,
-    "email" TEXT NOT NULL,
+    "email" VARCHAR(254) NOT NULL,
     "password_hash" TEXT,
     "dispatcher_id" UUID,
     "courier_status" "courier_status",
@@ -59,9 +59,9 @@ CREATE TABLE "vehicles" (
     "id" UUID NOT NULL,
     "company_id" UUID NOT NULL,
     "type" "vehicle_type" NOT NULL,
-    "vin" TEXT NOT NULL,
-    "legal_number" TEXT NOT NULL,
-    "color" TEXT NOT NULL,
+    "vin" VARCHAR(17),
+    "legal_number" VARCHAR(10),
+    "color" VARCHAR(30) NOT NULL,
     "is_sample" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -78,20 +78,20 @@ CREATE TABLE "orders" (
     "length" INTEGER NOT NULL,
     "width" INTEGER NOT NULL,
     "height" INTEGER NOT NULL,
-    "pickup_name" TEXT NOT NULL,
-    "pickup_phone" TEXT NOT NULL,
+    "pickup_name" VARCHAR(100) NOT NULL,
+    "pickup_phone" VARCHAR(20) NOT NULL,
     "pickup_window_start" TIMESTAMPTZ,
     "pickup_window_end" TIMESTAMPTZ,
-    "pickup_address" TEXT NOT NULL,
-    "pickup_comment" TEXT,
+    "pickup_address" VARCHAR(500) NOT NULL,
+    "pickup_comment" VARCHAR(500),
     "pickup_lat" DOUBLE PRECISION NOT NULL,
     "pickup_lng" DOUBLE PRECISION NOT NULL,
-    "dropoff_name" TEXT NOT NULL,
-    "dropoff_phone" TEXT NOT NULL,
+    "dropoff_name" VARCHAR(100) NOT NULL,
+    "dropoff_phone" VARCHAR(20) NOT NULL,
     "dropoff_window_start" TIMESTAMPTZ,
     "dropoff_window_end" TIMESTAMPTZ,
-    "dropoff_address" TEXT NOT NULL,
-    "dropoff_comment" TEXT,
+    "dropoff_address" VARCHAR(500) NOT NULL,
+    "dropoff_comment" VARCHAR(500),
     "dropoff_lat" DOUBLE PRECISION NOT NULL,
     "dropoff_lng" DOUBLE PRECISION NOT NULL,
     "tracking_token" TEXT NOT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE "stops" (
     "status" "stop_status" NOT NULL DEFAULT 'PENDING',
     "arrived_at" TIMESTAMPTZ,
     "completed_at" TIMESTAMPTZ,
-    "fail_reason" TEXT,
+    "fail_reason" VARCHAR(500),
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -234,7 +234,15 @@ ALTER TABLE "users"
             OR ("role" <> 'COURIER' AND "courier_status" IS NULL AND "dispatcher_id" IS NULL)
         );
 
--- Orders: ASAP has no time windows, SCHEDULED has all four; positive order parameters; valid coordinates
+-- Vehicles: cars and vans have a VIN and a plate number, bicycles have neither, scooters may have them
+ALTER TABLE "vehicles"
+    ADD CONSTRAINT "vehicles_identifiers_match_type" CHECK (
+        ("type" IN ('CAR', 'VAN') AND "vin" IS NOT NULL AND "legal_number" IS NOT NULL)
+            OR ("type" = 'BICYCLE' AND "vin" IS NULL AND "legal_number" IS NULL)
+            OR "type" = 'SCOOTER'
+        );
+
+-- Orders: ASAP has no time windows, SCHEDULED has all four; package weight and size within the largest vehicle (van); valid coordinates
 ALTER TABLE "orders"
     ADD CONSTRAINT "orders_windows_match_type" CHECK (
         ("type" = 'ASAP'
@@ -247,8 +255,9 @@ ALTER TABLE "orders"
   ADD CONSTRAINT "orders_pickup_window_valid" CHECK ("pickup_window_start" < "pickup_window_end"),
   ADD CONSTRAINT "orders_dropoff_window_valid" CHECK ("dropoff_window_start" < "dropoff_window_end"),
   ADD CONSTRAINT "orders_dropoff_after_pickup" CHECK ("dropoff_window_start" >= "pickup_window_start"),
-  ADD CONSTRAINT "orders_package_positive" CHECK (
-    "weight" > 0 AND "length" > 0 AND "width" > 0 AND "height" > 0
+  ADD CONSTRAINT "orders_package_in_range" CHECK (
+    "weight" BETWEEN 1 AND 1000000
+    AND "length" BETWEEN 1 AND 300 AND "width" BETWEEN 1 AND 300 AND "height" BETWEEN 1 AND 300
   ),
   ADD CONSTRAINT "orders_coordinates_valid" CHECK (
     "pickup_lat" BETWEEN -90 AND 90 AND "pickup_lng" BETWEEN -180 AND 180
@@ -268,3 +277,28 @@ ALTER TABLE "stops"
     "lat" BETWEEN -90 AND 90 AND "lng" BETWEEN -180 AND 180
   ),
   ADD CONSTRAINT "stops_failed_has_reason" CHECK ("status" <> 'FAILED' OR "fail_reason" IS NOT NULL);
+
+-- Text fields: required text is not blank; optional text is NULL rather than blank
+ALTER TABLE "companies"
+    ADD CONSTRAINT "companies_text_not_blank" CHECK (btrim("name") <> '' AND btrim("timezone") <> '');
+
+ALTER TABLE "users"
+    ADD CONSTRAINT "users_text_not_blank" CHECK (btrim("name") <> '' AND btrim("email") <> '');
+
+ALTER TABLE "vehicles"
+    ADD CONSTRAINT "vehicles_text_not_blank" CHECK (
+        btrim("color") <> ''
+            AND ("vin" IS NULL OR btrim("vin") <> '')
+            AND ("legal_number" IS NULL OR btrim("legal_number") <> '')
+        );
+
+ALTER TABLE "orders"
+    ADD CONSTRAINT "orders_text_not_blank" CHECK (
+        btrim("pickup_name") <> '' AND btrim("pickup_phone") <> '' AND btrim("pickup_address") <> ''
+            AND btrim("dropoff_name") <> '' AND btrim("dropoff_phone") <> '' AND btrim("dropoff_address") <> ''
+            AND ("pickup_comment" IS NULL OR btrim("pickup_comment") <> '')
+            AND ("dropoff_comment" IS NULL OR btrim("dropoff_comment") <> '')
+        );
+
+ALTER TABLE "stops"
+    ADD CONSTRAINT "stops_text_not_blank" CHECK ("fail_reason" IS NULL OR btrim("fail_reason") <> '');

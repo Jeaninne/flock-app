@@ -9,10 +9,11 @@ datasource db {
   provider = "postgresql"
 }
 
+// CHECK constraints: see migration init
 model Company {
   id                 String   @id @default(uuid(7)) @db.Uuid
-  name               String
-  timezone           String   @default("Europe/Kyiv")
+  name               String   @db.VarChar(100)
+  timezone           String   @default("Europe/Kyiv") @db.VarChar(64)
   shiftLengthMin     Int      @default(480) @map("shift_length_min")
   pickupHandlingMin  Int      @default(5) @map("pickup_handling_min")
   dropoffHandlingMin Int      @default(10) @map("dropoff_handling_min")
@@ -28,13 +29,14 @@ model Company {
   @@map("companies")
 }
 
+// CHECK constraints: see migration init
 /// Soft-deleted via deletedAt, never hard-deleted
 model User {
   id            String         @id @default(uuid(7)) @db.Uuid
   companyId     String         @map("company_id") @db.Uuid
-  name          String
+  name          String         @db.VarChar(100)
   role          UserRole
-  email         String         @unique // in future can be @@unique([companyId, email]) + tenant selection
+  email         String         @unique @db.VarChar(254) // in future can be @@unique([companyId, email]) + tenant selection
   passwordHash  String?        @map("password_hash")
   dispatcherId  String?        @map("dispatcher_id") @db.Uuid
   courierStatus CourierStatus? @map("courier_status")
@@ -53,14 +55,15 @@ model User {
   @@map("users")
 }
 
+// CHECK constraints: see migration3 init
 /// Soft-deleted via deletedAt, never hard-deleted
 model Vehicle {
   id          String      @id @default(uuid(7)) @db.Uuid
   companyId   String      @map("company_id") @db.Uuid
   type        VehicleType
-  vin         String
-  legalNumber String      @map("legal_number")
-  color       String
+  vin         String?     @db.VarChar(17)
+  legalNumber String?     @map("legal_number") @db.VarChar(10)
+  color       String      @db.VarChar(30)
   isSample    Boolean     @default(false) @map("is_sample")
   createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
@@ -76,6 +79,7 @@ model Vehicle {
   @@map("vehicles")
 }
 
+// CHECK constraints: see migration init
 model Order {
   id                 String      @id @default(uuid(7)) @db.Uuid
   companyId          String      @map("company_id") @db.Uuid
@@ -89,22 +93,22 @@ model Order {
   height             Int
   // pickup info
   /// Contact person at pickup
-  pickupName         String      @map("pickup_name")
-  pickupPhone        String      @map("pickup_phone")
+  pickupName         String      @map("pickup_name") @db.VarChar(100)
+  pickupPhone        String      @map("pickup_phone") @db.VarChar(20)
   pickupWindowStart  DateTime?   @map("pickup_window_start") @db.Timestamptz
   pickupWindowEnd    DateTime?   @map("pickup_window_end") @db.Timestamptz
-  pickupAddress      String      @map("pickup_address")
-  pickupComment      String?     @map("pickup_comment")
+  pickupAddress      String      @map("pickup_address") @db.VarChar(500)
+  pickupComment      String?     @map("pickup_comment") @db.VarChar(500)
   pickupLat          Float       @map("pickup_lat")
   pickupLng          Float       @map("pickup_lng")
   // dropoff info
   /// Contact person at dropoff
-  dropoffName        String      @map("dropoff_name")
-  dropoffPhone       String      @map("dropoff_phone")
+  dropoffName        String      @map("dropoff_name") @db.VarChar(100)
+  dropoffPhone       String      @map("dropoff_phone") @db.VarChar(20)
   dropoffWindowStart DateTime?   @map("dropoff_window_start") @db.Timestamptz
   dropoffWindowEnd   DateTime?   @map("dropoff_window_end") @db.Timestamptz
-  dropoffAddress     String      @map("dropoff_address")
-  dropoffComment     String?     @map("dropoff_comment")
+  dropoffAddress     String      @map("dropoff_address") @db.VarChar(500)
+  dropoffComment     String?     @map("dropoff_comment") @db.VarChar(500)
   dropoffLat         Float       @map("dropoff_lat")
   dropoffLng         Float       @map("dropoff_lng")
   trackingToken      String      @unique @map("tracking_token")
@@ -122,6 +126,7 @@ model Order {
   @@map("orders")
 }
 
+// CHECK constraints: see migration init
 model Route {
   id        String      @id @default(uuid(7)) @db.Uuid
   companyId String      @map("company_id") @db.Uuid
@@ -149,6 +154,7 @@ model Route {
   @@map("routes")
 }
 
+// CHECK constraints: see migration init
 model Stop {
   id          String     @id @default(uuid(7)) @db.Uuid
   companyId   String     @map("company_id") @db.Uuid
@@ -161,7 +167,7 @@ model Stop {
   status      StopStatus @default(PENDING)
   arrivedAt   DateTime?  @map("arrived_at") @db.Timestamptz
   completedAt DateTime?  @map("completed_at") @db.Timestamptz
-  failReason  String?    @map("fail_reason")
+  failReason  String?    @map("fail_reason") @db.VarChar(500)
   createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
