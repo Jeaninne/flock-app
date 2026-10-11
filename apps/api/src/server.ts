@@ -1,6 +1,7 @@
 import { createApp } from './app.js';
 import { logger } from './lib/logger.js';
 import { env } from './lib/env.js';
+import { prisma } from './lib/prisma.js';
 
 const server = createApp().listen(env.PORT, () => {
   logger.info(`API listening on http://localhost:${env.PORT}`);
@@ -17,12 +18,12 @@ const shutdown = (signal: NodeJS.Signals) => {
   isShuttingDown = true;
   logger.info(`${signal} received, shutting down`);
 
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       logger.error({ err }, 'Error while closing server');
-      process.exit(1);
     }
-    process.exit(0);
+    await prisma.$disconnect();
+    process.exit(err ? 1 : 0);
   });
 
   setTimeout(() => {
