@@ -19,3 +19,7 @@ pnpm dev                                         # web on :3000, API on :4000
 | API        | http://localhost:4000/api/v1             |
 | PostgreSQL | localhost:5432 (flock_admin / flock_dev) |
 | Redis      | localhost:6379                           |
+
+## Data sources
+
+Demo addresses in `apps/api/prisma/seed-data/addresses.json` come from [OpenStreetMap](https://www.openstreetmap.org/copyright) via Nominatim: © OpenStreetMap contributors, available under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/).
