@@ -4,7 +4,7 @@ A multi-tenant SaaS for small delivery services: dispatchers plan routes and sch
 
 ## Local setup
 
-Requirements: Node.js 22+, pnpm, Docker Desktop.
+Requirements: Node.js 24+, pnpm, Docker Desktop.
 
 ```bash
 pnpm install
