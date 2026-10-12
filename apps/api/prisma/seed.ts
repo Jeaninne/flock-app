@@ -52,10 +52,10 @@ const VEHICLES = [
 
 // The first addresses become pickup points (one per contact), the rest are customers
 const PICKUP_CONTACTS = [
-  { name: 'Happy Face Company', phone: '+447700900222', comment: 'Запитайте на вході' },
-  { name: 'Кав’ярня «Зерно»', phone: '+447700900223', comment: null },
-  { name: 'Квіткова крамниця «Півонія»', phone: '+447700900224', comment: 'Вхід з двору' },
-  { name: 'Книгарня «Сторінка»', phone: '+447700900225', comment: null },
+  { name: 'Компанія «Happy Face»', phone: '+447700900222', comment: 'Запитайте на вході' },
+  { name: 'Кав’ярня «Кава»', phone: '+447700900223', comment: null },
+  { name: 'Квіткова крамниця «Квіти»', phone: '+447700900224', comment: 'Вхід з двору' },
+  { name: 'Книгарня «Книгарня»', phone: '+447700900225', comment: null },
 ];
 const PICKUPS = PICKUP_CONTACTS.map((contact, k) => ({ ...contact, ...cycle(addresses, k) }));
 const DROPOFFS = addresses.slice(PICKUP_CONTACTS.length);
@@ -66,8 +66,22 @@ const PACKAGES = [
   { weight: 9000, length: 60, width: 40, height: 40 },
   { weight: 2500, length: 35, width: 35, height: 30 },
 ];
-const RECIPIENTS = ['Ганна Швець', 'Дмитро Карнаух', 'Надія Петренко'];
-const DROPOFF_COMMENTS = ['залиште в охорони', null, 'код домофону 25', null];
+const RECIPIENTS = [
+  'Ганна Швець',
+  'Дмитро Карнаух',
+  'Надія Петренко',
+  'Володимир Степаненко',
+  'Олесь В.',
+  'Степан Волошка',
+  'Сергій Л.',
+];
+const DROPOFF_COMMENTS = [
+  'залиште в охорони',
+  null,
+  'код домофону 25',
+  null,
+  'зателефонуйте - за замовленням вийдуть',
+];
 
 // Dates relative to now, so the demo always looks fresh
 const at = (dayOffset: number, hour: number) => {
@@ -82,7 +96,7 @@ const ORDERS = Array.from({ length: ORDER_COUNT }, (_, i) => {
   const pickup = cycle(PICKUPS, i);
   const dropoff = cycle(DROPOFFS, i);
   const isScheduled = i % 3 === 0;
-  const day = i % 2; // today or tomorrow
+  const day = 1 + (i % 2); // tomorrow or + 2 days (will be changed)
   return {
     ...cycle(PACKAGES, i),
     pickupName: pickup.name,
