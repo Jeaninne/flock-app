@@ -6,10 +6,8 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
-    "outDir": "dist",
-    "rootDir": "src",
-    "sourceMap": true,
+    "noEmit": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["src"]
+  "include": ["src", "prisma", "prisma.config.ts"]
 }
