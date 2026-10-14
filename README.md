@@ -37,7 +37,7 @@ pnpm install
 pnpm docker:up                                   # PostgreSQL + Redis
 cp apps/api/.env.example apps/api/.env           # Windows: Copy-Item
 pnpm db:migrate                                  # apply database migrations
-pnpm --filter api db:seed                        # demo company with a week of orders and routes
+pnpm db:seed                                     # demo company with a week of orders and routes
 pnpm dev                                         # web on :3000, API on :4000
 ```
 
