@@ -16,13 +16,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@flock/shared": "workspace:*",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "express": "^5.2.1",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
-    "zod": "^4.6.5"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -35,7 +36,7 @@
     "pino-pretty": "^13.2.0",
     "prisma": "^7.10.0",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3",
+    "typescript": "catalog:",
     "typescript-eslint": "^8.71.1"
   }
 }
