@@ -40,7 +40,6 @@ export const createOrderSchema = z
   })
   .refine((data) => canCarry('VAN', data), {
     error: 'validation.size.invalid',
-    path: ['lengthCm', 'widthCm', 'heightCm'],
   })
   .refine(
     (data) =>
@@ -64,4 +63,4 @@ export const createOrderSchema = z
 
 export type CreateOrderInput = z.input<typeof createOrderSchema>;
 export type CreateOrderData = z.output<typeof createOrderSchema>;
-export type StopPointInput = z.infer<typeof stopPointSchema>;
+export type StopPoint = z.infer<typeof stopPointSchema>;
