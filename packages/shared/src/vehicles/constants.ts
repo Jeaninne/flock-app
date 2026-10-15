@@ -7,11 +7,13 @@ export type VehicleType = (typeof VEHICLE_TYPES)[number];
 type Dimensions = { lengthCm: number; widthCm: number; heightCm: number };
 type VehicleLimits = { maxLoadGrams: number; cargo: Dimensions };
 
+export const MAX_SIDE = 300;
+export const MAX_WEIGHT = 1000000;
 export const VEHICLE_LIMITS = {
-  BICYCLE: { maxLoadGrams: 12000, cargo: { lengthCm: 50, widthCm: 40, heightCm: 40 } },
-  SCOOTER: { maxLoadGrams: 30000, cargo: { lengthCm: 60, widthCm: 50, heightCm: 50 } },
-  CAR: { maxLoadGrams: 100000, cargo: { lengthCm: 120, widthCm: 90, heightCm: 50 } },
-  VAN: { maxLoadGrams: 500000, cargo: { lengthCm: 230, widthCm: 170, heightCm: 150 } },
+  BICYCLE: { maxLoadGrams: 10000, cargo: { lengthCm: 50, widthCm: 40, heightCm: 40 } },
+  SCOOTER: { maxLoadGrams: 20000, cargo: { lengthCm: 60, widthCm: 45, heightCm: 45 } },
+  CAR: { maxLoadGrams: 50000, cargo: { lengthCm: 120, widthCm: 80, heightCm: 60 } },
+  VAN: { maxLoadGrams: MAX_WEIGHT, cargo: { lengthCm: MAX_SIDE, widthCm: 170, heightCm: 170 } },
 } as const satisfies Record<VehicleType, VehicleLimits>;
 
 const sortedSides = (d: Dimensions) => [d.lengthCm, d.widthCm, d.heightCm].sort((a, b) => b - a);

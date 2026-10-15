@@ -294,6 +294,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
 
   packages/shared:
     dependencies:
