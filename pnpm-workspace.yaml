@@ -1,6 +1,9 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+catalog:
+  zod: ^4.6.5
+  typescript: ^5.9.3
 shellEmulator: true
 allowBuilds:
   '@prisma/engines': true
