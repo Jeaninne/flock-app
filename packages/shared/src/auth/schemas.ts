@@ -5,7 +5,7 @@ export const loginSchema = z.object({
     .string({ error: 'validation.email.required' })
     .trim()
     .toLowerCase()
-    .max(254, 'validdation.email.length')
+    .max(254, 'validation.email.length')
     .pipe(z.email('validation.email.wrongFormat')),
   password: z
     .string({ error: 'validation.password.required' })

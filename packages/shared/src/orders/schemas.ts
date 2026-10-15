@@ -40,6 +40,7 @@ export const createOrderSchema = z
   })
   .refine((data) => canCarry('VAN', data), {
     error: 'validation.size.invalid',
+    path: ['lengthCm', 'widthCm', 'heightCm'],
   })
   .refine(
     (data) =>
@@ -47,16 +48,20 @@ export const createOrderSchema = z
       (data.type === 'ASAP' && !data.pickup.timeWindow && !data.dropoff.timeWindow),
     {
       error: 'validation.orderType.brokenTimeWindow',
+      path: ['type'],
     },
   )
   .refine(
     (data) =>
       !data.pickup.timeWindow ||
       !data.dropoff.timeWindow ||
-      data.pickup.timeWindow.start.getTime() < data.dropoff.timeWindow.start.getTime(),
-    { error: 'validation.orderType.dropoffBeforePickup' },
+      data.pickup.timeWindow.start.getTime() <= data.dropoff.timeWindow.start.getTime(),
+    {
+      error: 'validation.orderType.dropoffBeforePickup',
+      path: ['dropoff', 'timeWindow', 'start'],
+    },
   );
 
 export type CreateOrderInput = z.input<typeof createOrderSchema>;
 export type CreateOrderData = z.output<typeof createOrderSchema>;
-export type StopPointType = z.infer<typeof stopPointSchema>;
+export type StopPointInput = z.infer<typeof stopPointSchema>;

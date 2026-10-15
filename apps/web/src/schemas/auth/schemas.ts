@@ -1,8 +1,7 @@
 import { z } from 'zod';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@flock/shared/dist';
 
-const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_MAX_LENGTH = 72;
-
+// TODO migrate rest in #13
 export const setPasswordSchema = z
   .object({
     email: z.string(), // TODO check if we need this field
