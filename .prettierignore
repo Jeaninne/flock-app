@@ -2,3 +2,4 @@ pnpm-lock.yaml
 .next
 dist
 apps/api/src/generated
+next-env.d.ts

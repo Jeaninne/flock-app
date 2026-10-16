@@ -4,6 +4,8 @@ A multi-tenant SaaS for small delivery services: dispatchers plan routes and sch
 
 > **Status:** in active development — milestone 1 of 6 (foundation). Progress is tracked in [GitHub Issues](https://github.com/Jeaninne/flock-app/issues) or can be checked on [board](https://github.com/users/Jeaninne/projects/1/); the full roadmap is in the [spec](docs/SPEC.md#milestones).
 
+[![CI](https://github.com/Jeaninne/flock-app/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jeaninne/flock-app/actions/workflows/ci.yml)
+
 ## Documentation
 
 - [Technical specification](docs/SPEC.md) — roles, functional requirements, data model, architecture, API design, non-functional requirements and milestones
@@ -17,7 +19,7 @@ A multi-tenant SaaS for small delivery services: dispatchers plan routes and sch
 | Data    | PostgreSQL + Prisma, Redis                                   |
 | Tooling | pnpm workspaces, ESLint, Prettier, Husky, commitlint, Docker |
 
-Planned: Socket.IO for real-time tracking, BullMQ background jobs, Leaflet + OpenStreetMap, Vitest, Supertest and Playwright, GitHub Actions — see [Architecture](docs/SPEC.md#architecture-and-tech-stack).
+Planned: Socket.IO for real-time tracking, BullMQ background jobs, Leaflet + OpenStreetMap, Vitest, Supertest and Playwright — see [Architecture](docs/SPEC.md#architecture-and-tech-stack).
 
 ## Project structure
 
