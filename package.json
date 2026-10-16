@@ -21,6 +21,7 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm --filter @flock/shared build && pnpm -r typecheck",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prepare": "husky"
   },
   "devEngines": {
