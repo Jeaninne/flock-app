@@ -1,6 +1,7 @@
 // Demo data for local development and the public demo.
 // Idempotent: deletes the demo company's data child-first and recreates it.
 import { prisma } from '../src/lib/prisma.js';
+import { hashPassword } from '../src/lib/password.js';
 import addresses from './seed-data/addresses.json' with { type: 'json' };
 import { randomBytes } from 'node:crypto';
 import type { Order } from '../src/generated/prisma/client.js';
@@ -19,6 +20,7 @@ import {
   DROPOFF_COMMENTS,
   VEHICLES,
   PICKUP_CONTACTS,
+  PASSWORD,
 } from './seed-data/demo.js';
 
 // Set one global timezone for demo company
@@ -137,6 +139,9 @@ const ORDERS = Array.from({ length: ORDER_COUNT }, (_, i) =>
 );
 
 async function main() {
+  // one shared password for all demo users, hashed once
+  const demoPasswordHash = await hashPassword(PASSWORD);
+
   await prisma.$transaction(
     async (tx) => {
       const companyId = DEMO_COMPANY_ID;
@@ -159,6 +164,7 @@ async function main() {
           role: 'ADMIN',
           name: 'Наталія Шевчук',
           email: email('admin'),
+          passwordHash: demoPasswordHash,
           isSample: true,
         },
       });
@@ -166,7 +172,13 @@ async function main() {
       const couriers: { id: string }[] = [];
       for (const team of TEAMS) {
         const dispatcher = await tx.user.create({
-          data: { companyId, role: 'DISPATCHER', ...team.dispatcher, isSample: true },
+          data: {
+            companyId,
+            role: 'DISPATCHER',
+            ...team.dispatcher,
+            passwordHash: demoPasswordHash,
+            isSample: true,
+          },
         });
         const created = await tx.user.createManyAndReturn({
           data: team.couriers.map((c) => ({
@@ -174,6 +186,7 @@ async function main() {
             role: 'COURIER' as const,
             courierStatus: 'AVAILABLE' as const,
             dispatcherId: dispatcher.id,
+            passwordHash: demoPasswordHash,
             ...c,
             isSample: true,
           })),
