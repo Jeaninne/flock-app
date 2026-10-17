@@ -6,6 +6,7 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   REDIS_URL: z.url({ protocol: /^rediss?$/ }),
+  JWT_ACCESS_SECRET: z.string().min(32),
 });
 
 // Treat empty values (`PORT=` in .env, `${VAR}` of an unset var in docker-compose) as unset,

@@ -3,10 +3,8 @@ import bcrypt from 'bcryptjs';
 // bcrypt cost factor: each +1 doubles the hashing time
 const SALT_ROUNDS = 10;
 
-export function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
-}
+export const hashPassword = (password: string): Promise<string> =>
+  bcrypt.hash(password, SALT_ROUNDS);
 
-export function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
+export const verifyPassword = (password: string, hash: string): Promise<boolean> =>
+  bcrypt.compare(password, hash);

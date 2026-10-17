@@ -4,6 +4,7 @@ export const DEMO_COMPANY_ID = '00000000-0000-4000-8000-000000000001';
 export const DEMO_COMPANY_NAME = 'Flock Demo';
 export const EMAIL_DOMAIN = 'flock-demo.example'; // .example is reserved (can never be a real mailbox)
 export const email = (local: string) => `${local}@${EMAIL_DOMAIN}`;
+export const PASSWORD = 'demo_password_123';
 export const ROUTES_PER_DAY = 4;
 export const ORDERS_PER_ROUTE = 3;
 export const HISTORY_DAYS = 7;
