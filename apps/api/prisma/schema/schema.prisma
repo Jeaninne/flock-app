@@ -45,11 +45,11 @@ model User {
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt     DateTime?      @map("deleted_at") @db.Timestamptz
 
-  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  dispatcher User?          @relation("DispatcherCouriers", fields: [dispatcherId], references: [id], onDelete: SetNull)
-  couriers   User[]         @relation("DispatcherCouriers")
-  tokens     RefreshToken[]
-  routes     Route[]
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  dispatcher    User?          @relation("DispatcherCouriers", fields: [dispatcherId], references: [id], onDelete: SetNull)
+  couriers      User[]         @relation("DispatcherCouriers")
+  refreshTokens RefreshToken[]
+  routes        Route[]
 
   @@index([companyId, role])
   @@index([dispatcherId])
