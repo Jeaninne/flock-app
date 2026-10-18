@@ -7,5 +7,8 @@ export const hashPassword = (password: string): Promise<string> =>
   bcrypt.hash(password, SALT_ROUNDS);
 
 const DUMMY_HASH = await hashPassword('dummy');
-export const verifyPassword = (password: string, hash?: string | null): Promise<boolean> =>
-  bcrypt.compare(password, hash ?? DUMMY_HASH);
+export const verifyPassword = async (password: string, hash?: string | null): Promise<boolean> => {
+  if (hash) return bcrypt.compare(password, hash);
+  await bcrypt.compare(password, DUMMY_HASH); // only to spend the same time; result ignored
+  return false;
+};
