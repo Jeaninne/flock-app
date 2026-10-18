@@ -20,7 +20,7 @@ import {
   DROPOFF_COMMENTS,
   VEHICLES,
   PICKUP_CONTACTS,
-  PASSWORD,
+  DEMO_PASSWORD,
 } from './seed-data/demo.js';
 
 // Set one global timezone for demo company
@@ -140,7 +140,7 @@ const ORDERS = Array.from({ length: ORDER_COUNT }, (_, i) =>
 
 async function main() {
   // one shared password for all demo users, hashed once
-  const demoPasswordHash = await hashPassword(PASSWORD);
+  const demoPasswordHash = await hashPassword(DEMO_PASSWORD);
 
   await prisma.$transaction(
     async (tx) => {
