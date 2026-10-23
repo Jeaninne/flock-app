@@ -13,7 +13,7 @@ import { loginLimiter, refreshLimiter } from '../middleware/rate-limit.js';
 
 export const authRouter = Router();
 
-const REFRESH_TOKEN = 'refresh_token';
+const REFRESH_TOKEN_COOKIE = 'refresh_token';
 const refreshCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: !isDev,
@@ -22,11 +22,11 @@ const refreshCookieOptions: CookieOptions = {
 };
 
 const setRefreshCookie = (res: Response, token: string, expiresAt: Date) => {
-  res.cookie(REFRESH_TOKEN, token, { ...refreshCookieOptions, expires: expiresAt });
+  res.cookie(REFRESH_TOKEN_COOKIE, token, { ...refreshCookieOptions, expires: expiresAt });
 };
 
 const clearRefreshCookie = (res: Response) => {
-  res.clearCookie(REFRESH_TOKEN, refreshCookieOptions);
+  res.clearCookie(REFRESH_TOKEN_COOKIE, refreshCookieOptions);
 };
 
 // Must stay a `function` declaration with an explicit `never`:
@@ -92,7 +92,7 @@ authRouter.post('/login', loginLimiter, validateBody(loginSchema), async (req, r
 });
 
 authRouter.post('/refresh', refreshLimiter, async (req, res) => {
-  const oldRefreshToken = req.cookies[REFRESH_TOKEN];
+  const oldRefreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
   if (!oldRefreshToken || typeof oldRefreshToken !== 'string') {
     rejectRefresh(res);
   }
@@ -114,37 +114,37 @@ authRouter.post('/refresh', refreshLimiter, async (req, res) => {
     rejectRefresh(res);
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const newRefreshToken = await prisma.$transaction(async (tx) => {
     const { count } = await tx.refreshToken.updateMany({
       where: { id: authRecord.id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
     if (count === 0) return null; // someone already used this token → reuse
 
-    const newRefreshToken = generateRefreshToken();
+    const nextRefreshToken = generateRefreshToken();
     await tx.refreshToken.create({
       data: {
         userId: authRecord.userId,
         tokenFamilyId: authRecord.tokenFamilyId,
-        tokenHash: newRefreshToken.tokenHash,
-        expiresAt: newRefreshToken.expiresAt,
+        tokenHash: nextRefreshToken.tokenHash,
+        expiresAt: nextRefreshToken.expiresAt,
       },
     });
 
-    return newRefreshToken;
+    return nextRefreshToken;
   });
 
-  if (!result) {
+  if (!newRefreshToken) {
     await revokeFamily(authRecord.tokenFamilyId);
     rejectRefresh(res);
   }
 
-  setRefreshCookie(res, result.token, result.expiresAt);
+  setRefreshCookie(res, newRefreshToken.token, newRefreshToken.expiresAt);
   await sendAuthResponse(res, authRecord.user);
 });
 
 authRouter.post('/logout', refreshLimiter, async (req, res) => {
-  const refreshToken = req.cookies[REFRESH_TOKEN];
+  const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
   if (refreshToken && typeof refreshToken === 'string') {
     const tokenHash = hashRefreshToken(refreshToken);
     const authRecord = await prisma.refreshToken.findUnique({
