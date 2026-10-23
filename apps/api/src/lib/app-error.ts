@@ -7,6 +7,7 @@ export type ErrorCode =
   | 'CONFLICT'
   | 'PAYLOAD_TOO_LARGE'
   | 'UNSUPPORTED_MEDIA_TYPE'
+  | 'TOO_MANY_REQUESTS'
   | 'INTERNAL_ERROR';
 
 const statusByCode: Record<ErrorCode, number> = {
@@ -18,6 +19,7 @@ const statusByCode: Record<ErrorCode, number> = {
   CONFLICT: 409,
   PAYLOAD_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
+  TOO_MANY_REQUESTS: 429,
   INTERNAL_ERROR: 500,
 };
 

@@ -18,6 +18,7 @@ const codeByStatus: Partial<Record<number, ErrorCode>> = {
   409: 'CONFLICT',
   413: 'PAYLOAD_TOO_LARGE',
   415: 'UNSUPPORTED_MEDIA_TYPE',
+  429: 'TOO_MANY_REQUESTS',
 };
 
 const clientMessage = (err: HttpError) => {

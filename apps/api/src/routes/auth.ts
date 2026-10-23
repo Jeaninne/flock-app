@@ -9,6 +9,7 @@ import { generateRefreshToken, hashRefreshToken, signAccessToken } from '../lib/
 import { isDev } from '../lib/env.js';
 import type { User } from '../generated/prisma/client.js';
 import { requireAuth } from '../middleware/require-auth.js';
+import { loginLimiter, refreshLimiter } from '../middleware/rate-limit.js';
 
 export const authRouter = Router();
 
@@ -62,7 +63,7 @@ const sendAuthResponse = async (res: Response, user: AuthUser) => {
   res.json({ accessToken, user: toAuthUser(user) });
 };
 
-authRouter.post('/login', validateBody(loginSchema), async (req, res) => {
+authRouter.post('/login', loginLimiter, validateBody(loginSchema), async (req, res) => {
   const { email, password } = req.body as LoginInput;
   const currentUser = await prisma.user.findUnique({
     where: { email },
@@ -90,7 +91,7 @@ authRouter.post('/login', validateBody(loginSchema), async (req, res) => {
   await sendAuthResponse(res, currentUser);
 });
 
-authRouter.post('/refresh', async (req, res) => {
+authRouter.post('/refresh', refreshLimiter, async (req, res) => {
   const oldRefreshToken = req.cookies[REFRESH_TOKEN];
   if (!oldRefreshToken || typeof oldRefreshToken !== 'string') {
     rejectRefresh(res);
@@ -142,7 +143,7 @@ authRouter.post('/refresh', async (req, res) => {
   await sendAuthResponse(res, authRecord.user);
 });
 
-authRouter.post('/logout', async (req, res) => {
+authRouter.post('/logout', refreshLimiter, async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN];
   if (refreshToken && typeof refreshToken === 'string') {
     const tokenHash = hashRefreshToken(refreshToken);
