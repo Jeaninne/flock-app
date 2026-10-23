@@ -8,6 +8,7 @@ import { AppError } from '../lib/app-error.js';
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from '../lib/tokens.js';
 import { isDev } from '../lib/env.js';
 import type { User } from '../generated/prisma/client.js';
+import { requireAuth } from '../middleware/require-auth.js';
 
 export const authRouter = Router();
 
@@ -47,19 +48,18 @@ const revokeAllForUser = (userId: string) =>
   });
 
 type AuthUser = Pick<User, 'id' | 'name' | 'email' | 'role' | 'companyId'>;
+const toAuthUser = (user: AuthUser) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  companyId: user.companyId,
+});
+
 const sendAuthResponse = async (res: Response, user: AuthUser) => {
   const accessToken = await signAccessToken(user);
 
-  res.json({
-    accessToken,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId,
-    },
-  });
+  res.json({ accessToken, user: toAuthUser(user) });
 };
 
 authRouter.post('/login', validateBody(loginSchema), async (req, res) => {
@@ -157,4 +157,15 @@ authRouter.post('/logout', async (req, res) => {
   }
   clearRefreshCookie(res);
   res.status(204).end();
+});
+
+authRouter.get('/me', requireAuth, async (req, res) => {
+  const userId = req.auth?.sub;
+  if (!userId) throw new AppError('UNAUTHORIZED', 'Invalid access token');
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user || user.deletedAt) throw new AppError('UNAUTHORIZED', 'Invalid access token');
+
+  res.json({ user: toAuthUser(user) });
 });

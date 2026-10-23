@@ -3,7 +3,7 @@ import { env } from './env.js';
 import type { User } from '../generated/prisma/client.js';
 import { createHash, randomBytes } from 'node:crypto';
 
-type AccessTokenPayload = {
+export type AccessTokenPayload = {
   sub: string;
   role: User['role'];
   companyId: string;
