@@ -27,6 +27,8 @@ const clearRefreshCookie = (res: Response) => {
   res.clearCookie(REFRESH_TOKEN, refreshCookieOptions);
 };
 
+// Must stay a `function` declaration with an explicit `never`:
+// only then does TS narrow types after the call (an untyped arrow breaks it)
 function rejectRefresh(res: Response): never {
   clearRefreshCookie(res);
   throw new AppError('UNAUTHORIZED', 'Invalid or expired refresh token');
@@ -138,4 +140,21 @@ authRouter.post('/refresh', async (req, res) => {
 
   setRefreshCookie(res, result.token, result.expiresAt);
   await sendAuthResponse(res, authRecord.user);
+});
+
+authRouter.post('/logout', async (req, res) => {
+  const refreshToken = req.cookies[REFRESH_TOKEN];
+  if (refreshToken && typeof refreshToken === 'string') {
+    const tokenHash = hashRefreshToken(refreshToken);
+    const authRecord = await prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      select: { tokenFamilyId: true },
+    });
+
+    if (authRecord) {
+      await revokeFamily(authRecord.tokenFamilyId);
+    }
+  }
+  clearRefreshCookie(res);
+  res.status(204).end();
 });
