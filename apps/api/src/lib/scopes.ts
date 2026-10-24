@@ -12,11 +12,14 @@ export const visibleUsersWhere = (auth: AccessTokenPayload): Prisma.UserWhereInp
       return {
         companyId: auth.companyId,
         dispatcherId: auth.sub,
+        role: 'COURIER',
         deletedAt: null,
       };
     case 'COURIER':
       return {
+        companyId: auth.companyId,
         id: auth.sub,
+        deletedAt: null,
       };
   }
 };

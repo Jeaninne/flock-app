@@ -162,7 +162,6 @@ authRouter.post('/logout', refreshLimiter, async (req, res) => {
 
 authRouter.get('/me', requireAuth, async (req, res) => {
   const userId = getAuth(req).sub;
-  if (!userId) throw new AppError('UNAUTHORIZED', 'Invalid access token');
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
