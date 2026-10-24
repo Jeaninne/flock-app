@@ -8,7 +8,7 @@ import { AppError } from '../lib/app-error.js';
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from '../lib/tokens.js';
 import { isDev } from '../lib/env.js';
 import type { User } from '../generated/prisma/client.js';
-import { requireAuth } from '../middleware/require-auth.js';
+import { getAuth, requireAuth } from '../middleware/require-auth.js';
 import { loginLimiter, refreshLimiter } from '../middleware/rate-limit.js';
 
 export const authRouter = Router();
@@ -161,8 +161,7 @@ authRouter.post('/logout', refreshLimiter, async (req, res) => {
 });
 
 authRouter.get('/me', requireAuth, async (req, res) => {
-  const userId = req.auth?.sub;
-  if (!userId) throw new AppError('UNAUTHORIZED', 'Invalid access token');
+  const userId = getAuth(req).sub;
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });

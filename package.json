@@ -20,6 +20,7 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm --filter @flock/shared build && pnpm -r typecheck",
+    "test": "pnpm --filter @flock/shared build && pnpm -r test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"

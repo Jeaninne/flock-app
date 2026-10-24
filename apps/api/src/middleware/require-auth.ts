@@ -1,4 +1,4 @@
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { verifyAccessToken } from '../lib/tokens.js';
 
@@ -17,4 +17,10 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
   }
 
   next();
+};
+
+// Use in handlers behind requireAuth: returns req.auth already typed as non-optional
+export const getAuth = (req: Request) => {
+  if (!req.auth) throw new AppError('UNAUTHORIZED', 'Invalid access token');
+  return req.auth;
 };
