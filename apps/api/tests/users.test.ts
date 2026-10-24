@@ -7,7 +7,10 @@ import { signAccessToken } from '../src/lib/tokens.js';
 const app = createApp();
 
 const companyIds: string[] = [];
-const ids = {} as Record<'adminA' | 'dispatcherA' | 'courierA' | 'courierC', string>;
+const ids = {} as Record<
+  'adminA' | 'dispatcherA' | 'dispatcherA2' | 'courierA' | 'courierA2' | 'courierC',
+  string
+>;
 let adminToken: string;
 let dispatcherToken: string;
 let courierToken: string;
@@ -18,10 +21,10 @@ beforeAll(async () => {
   companyIds.push(companyA.id, companyB.id);
 
   const adminA = await prisma.user.create({
-    data: { companyId: companyA.id, name: 'Admin A', role: 'ADMIN', email: 'admin_a@test.dev' },
+    data: { companyId: companyA.id, name: 'Admin A', role: 'ADMIN', email: 'admin_a@test.example' },
   });
   await prisma.user.create({
-    data: { companyId: companyB.id, name: 'Admin B', role: 'ADMIN', email: 'admin_b@test.dev' },
+    data: { companyId: companyB.id, name: 'Admin B', role: 'ADMIN', email: 'admin_b@test.example' },
   });
 
   const dispatcherA = await prisma.user.create({
@@ -29,7 +32,15 @@ beforeAll(async () => {
       companyId: companyA.id,
       name: 'Dispatcher A',
       role: 'DISPATCHER',
-      email: 'disp_a@test.dev',
+      email: 'disp_a@test.example',
+    },
+  });
+  const dispatcherA2 = await prisma.user.create({
+    data: {
+      companyId: companyA.id,
+      name: 'Dispatcher A2',
+      role: 'DISPATCHER',
+      email: 'disp_a2@test.example',
     },
   });
   await prisma.user.create({
@@ -37,7 +48,7 @@ beforeAll(async () => {
       companyId: companyA.id,
       name: 'Deleted',
       role: 'DISPATCHER',
-      email: 'disp_c@test.dev',
+      email: 'disp_c@test.example',
       deletedAt: new Date(),
     },
   });
@@ -47,9 +58,19 @@ beforeAll(async () => {
       companyId: companyA.id,
       name: 'Courier A',
       role: 'COURIER',
-      email: 'courier_a@test.dev',
+      email: 'courier_a@test.example',
       courierStatus: 'AVAILABLE',
       dispatcherId: dispatcherA.id,
+    },
+  });
+  const courierA2 = await prisma.user.create({
+    data: {
+      companyId: companyA.id,
+      name: 'Courier A2',
+      role: 'COURIER',
+      email: 'courier_a2@test.example',
+      courierStatus: 'AVAILABLE',
+      dispatcherId: dispatcherA2.id,
     },
   });
   await prisma.user.create({
@@ -57,16 +78,16 @@ beforeAll(async () => {
       companyId: companyB.id,
       name: 'Courier B',
       role: 'COURIER',
-      email: 'courier_b@test.dev',
+      email: 'courier_b@test.example',
       courierStatus: 'AVAILABLE',
     },
   });
   const courierC = await prisma.user.create({
     data: {
       companyId: companyA.id,
-      name: 'Courier C',
+      name: 'Courier w/o assignment',
       role: 'COURIER',
-      email: 'courier_c@test.dev',
+      email: 'courier_c@test.example',
       courierStatus: 'AVAILABLE',
     },
   });
@@ -76,7 +97,9 @@ beforeAll(async () => {
   courierToken = await signAccessToken(courierA);
   ids.adminA = adminA.id;
   ids.dispatcherA = dispatcherA.id;
+  ids.dispatcherA2 = dispatcherA2.id;
   ids.courierA = courierA.id;
+  ids.courierA2 = courierA2.id;
   ids.courierC = courierC.id;
 });
 
@@ -117,8 +140,10 @@ describe('GET /api/v1/users', () => {
     expect(res.body.users.map((u: { id: string }) => u.id)).toEqual([
       ids.adminA,
       ids.courierA,
+      ids.courierA2,
       ids.courierC,
       ids.dispatcherA,
+      ids.dispatcherA2,
     ]);
   });
 });
