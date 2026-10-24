@@ -22,3 +22,32 @@ jobs:
       - run: pnpm lint
       # typecheck builds @flock/shared
       - run: pnpm typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      # Credentials match TEST_DATABASE_URL in apps/api/vitest.config.ts
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: flock_admin
+          POSTGRES_PASSWORD: flock_dev
+          POSTGRES_DB: flock_test
+        ports:
+          - 5432:5432
+        # Steps start only after Postgres accepts connections
+        options: >-
+          --health-cmd "pg_isready -U flock_admin -d flock_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # test builds @flock/shared, global setup resets the test DB and applies migrations
+      - run: pnpm test
