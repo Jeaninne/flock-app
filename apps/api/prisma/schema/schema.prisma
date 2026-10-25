@@ -45,11 +45,12 @@ model User {
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt     DateTime?      @map("deleted_at") @db.Timestamptz
 
-  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  dispatcher    User?          @relation("DispatcherCouriers", fields: [dispatcherId], references: [id], onDelete: SetNull)
-  couriers      User[]         @relation("DispatcherCouriers")
-  refreshTokens RefreshToken[]
-  routes        Route[]
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  dispatcher          User?                @relation("DispatcherCouriers", fields: [dispatcherId], references: [id], onDelete: SetNull)
+  couriers            User[]               @relation("DispatcherCouriers")
+  refreshTokens       RefreshToken[]
+  passwordSetupTokens PasswordSetupToken[]
+  routes              Route[]
 
   @@index([companyId, role])
   @@index([dispatcherId])
@@ -70,6 +71,20 @@ model RefreshToken {
   @@index([userId])
   @@index([tokenFamilyId])
   @@map("refresh_tokens")
+}
+
+model PasswordSetupToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_setup_tokens")
 }
 
 // CHECK constraints: see migration init
