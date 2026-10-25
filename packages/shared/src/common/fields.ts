@@ -33,3 +33,10 @@ export const numberRequired = (min: number, max: number) =>
     .int({ error: 'validation.number.invalid' })
     .min(min, { error: 'validation.number.min' })
     .max(max, { error: 'validation.number.max' });
+
+export const emailSchema = z
+  .string({ error: 'validation.email.required' })
+  .trim()
+  .toLowerCase()
+  .max(254, { error: 'validation.email.length' })
+  .pipe(z.email({ error: 'validation.email.wrongFormat' }));

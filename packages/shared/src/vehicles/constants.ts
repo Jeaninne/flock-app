@@ -1,5 +1,4 @@
-// TODO: update after implementation
-// currently just a copy of Prisma enum TODO: add typecheck in API
+// currently just a copy of Prisma enum
 export const VEHICLE_TYPES = ['BICYCLE', 'SCOOTER', 'CAR', 'VAN'] as const;
 export type VehicleType = (typeof VEHICLE_TYPES)[number];
 
