@@ -37,7 +37,7 @@ usersRouter.post(
   validateBody(inviteUserSchema),
   async (req, res) => {
     const auth = getAuth(req);
-    const userToCreate: InviteUserInput = req.body;
+    const userToCreate = req.body as InviteUserInput;
 
     const data = await prisma.$transaction(async (tx) => {
       // Lock admin row until this transaction ends

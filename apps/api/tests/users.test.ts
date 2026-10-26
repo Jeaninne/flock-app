@@ -261,7 +261,7 @@ describe('POST /api/v1/users/invite', () => {
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
-  it('returns 400 if new dispatcher is under different company', async () => {
+  it('returns 400 if dispatcher belongs to another company', async () => {
     const res = await request(app)
       .post('/api/v1/users/invite')
       .set('Authorization', `Bearer ${adminAToken}`)

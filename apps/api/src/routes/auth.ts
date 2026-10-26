@@ -1,9 +1,14 @@
 import { type CookieOptions, type Response, Router } from 'express';
 import { randomUUID } from 'node:crypto';
 import { validateBody } from '../middleware/validate.js';
-import { type LoginInput, loginSchema } from '@flock/shared';
+import {
+  type LoginInput,
+  loginSchema,
+  type SetPasswordInput,
+  setPasswordSchema,
+} from '@flock/shared';
 import { prisma } from '../lib/prisma.js';
-import { verifyPassword } from '../lib/password.js';
+import { hashPassword, verifyPassword } from '../lib/password.js';
 import { AppError } from '../lib/app-error.js';
 import { generateRefreshToken, hashToken, signAccessToken } from '../lib/tokens.js';
 import { isDev } from '../lib/env.js';
@@ -168,4 +173,37 @@ authRouter.get('/me', requireAuth, async (req, res) => {
   if (!user || user.deletedAt) throw new AppError('UNAUTHORIZED', 'Invalid access token');
 
   res.json({ user: toAuthUser(user) });
+});
+
+authRouter.post('/setup-password', validateBody(setPasswordSchema), async (req, res) => {
+  const now = new Date();
+  const { token, password } = req.body as SetPasswordInput;
+  const tokenHash = hashToken(token);
+  const record = await prisma.passwordSetupToken.findUnique({
+    where: { tokenHash },
+    include: { user: { select: { deletedAt: true } } },
+  });
+  if (!record || record.expiresAt < now || record.usedAt || record.user.deletedAt)
+    throw new AppError('BAD_REQUEST', 'Invalid or expired link');
+
+  const passwordHash = await hashPassword(password);
+  await prisma.$transaction(async (tx) => {
+    const { count } = await tx.passwordSetupToken.updateMany({
+      where: { tokenHash, usedAt: null },
+      data: { usedAt: now },
+    });
+    if (count === 0) throw new AppError('BAD_REQUEST', 'Invalid or expired link');
+
+    await tx.user.update({
+      where: { id: record.userId },
+      data: { passwordHash },
+    });
+    // cleanup
+    await tx.passwordSetupToken.updateMany({
+      where: { userId: record.userId, usedAt: null },
+      data: { usedAt: now },
+    });
+  });
+
+  res.status(204).end();
 });
