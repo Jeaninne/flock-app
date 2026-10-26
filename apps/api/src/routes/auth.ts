@@ -5,7 +5,7 @@ import { type LoginInput, loginSchema } from '@flock/shared';
 import { prisma } from '../lib/prisma.js';
 import { verifyPassword } from '../lib/password.js';
 import { AppError } from '../lib/app-error.js';
-import { generateRefreshToken, hashRefreshToken, signAccessToken } from '../lib/tokens.js';
+import { generateRefreshToken, hashToken, signAccessToken } from '../lib/tokens.js';
 import { isDev } from '../lib/env.js';
 import type { User } from '../generated/prisma/client.js';
 import { getAuth, requireAuth } from '../middleware/require-auth.js';
@@ -96,7 +96,7 @@ authRouter.post('/refresh', refreshLimiter, async (req, res) => {
   if (!oldRefreshToken || typeof oldRefreshToken !== 'string') {
     rejectRefresh(res);
   }
-  const tokenHash = hashRefreshToken(oldRefreshToken);
+  const tokenHash = hashToken(oldRefreshToken);
   const authRecord = await prisma.refreshToken.findUnique({
     where: { tokenHash },
     include: { user: true },
@@ -146,7 +146,7 @@ authRouter.post('/refresh', refreshLimiter, async (req, res) => {
 authRouter.post('/logout', refreshLimiter, async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
   if (refreshToken && typeof refreshToken === 'string') {
-    const tokenHash = hashRefreshToken(refreshToken);
+    const tokenHash = hashToken(refreshToken);
     const authRecord = await prisma.refreshToken.findUnique({
       where: { tokenHash },
       select: { tokenFamilyId: true },

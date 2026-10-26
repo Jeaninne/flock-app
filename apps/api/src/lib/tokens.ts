@@ -12,6 +12,7 @@ export type AccessTokenPayload = {
 const secret = new TextEncoder().encode(env.JWT_ACCESS_SECRET);
 const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SETUP_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; //  7 days
 
 export const signAccessToken = (user: Pick<User, 'id' | 'role' | 'companyId'>) =>
   new SignJWT({ role: user.role, companyId: user.companyId })
@@ -26,13 +27,16 @@ export const verifyAccessToken = async (token: string) => {
   return payload;
 };
 
-export const hashRefreshToken = (token: string) => createHash('sha256').update(token).digest('hex');
+export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
-export const generateRefreshToken = () => {
+const generateToken = (ttl: number) => {
   const token = randomBytes(32).toString('base64url');
   return {
     token,
-    tokenHash: hashRefreshToken(token),
-    expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    tokenHash: hashToken(token),
+    expiresAt: new Date(Date.now() + ttl),
   };
 };
+
+export const generateRefreshToken = () => generateToken(REFRESH_TOKEN_TTL_MS);
+export const generateSetupToken = () => generateToken(SETUP_TOKEN_TTL_MS);
