@@ -13,6 +13,7 @@ export default defineConfig({
       DATABASE_URL: TEST_DATABASE_URL,
       REDIS_URL: 'redis://localhost:6379',
       JWT_ACCESS_SECRET: 'test-secret-at-least-32-characters-long',
+      WEB_URL: 'http://localhost:3000',
     },
     // Runs once before all test files: resets the test DB and applies migrations
     globalSetup: './tests/global-setup.ts',

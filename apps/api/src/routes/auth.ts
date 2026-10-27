@@ -1,11 +1,16 @@
 import { type CookieOptions, type Response, Router } from 'express';
 import { randomUUID } from 'node:crypto';
 import { validateBody } from '../middleware/validate.js';
-import { type LoginInput, loginSchema } from '@flock/shared';
+import {
+  type LoginInput,
+  loginSchema,
+  type SetPasswordInput,
+  setPasswordSchema,
+} from '@flock/shared';
 import { prisma } from '../lib/prisma.js';
-import { verifyPassword } from '../lib/password.js';
+import { hashPassword, verifyPassword } from '../lib/password.js';
 import { AppError } from '../lib/app-error.js';
-import { generateRefreshToken, hashRefreshToken, signAccessToken } from '../lib/tokens.js';
+import { generateRefreshToken, hashToken, signAccessToken } from '../lib/tokens.js';
 import { isDev } from '../lib/env.js';
 import type { User } from '../generated/prisma/client.js';
 import { getAuth, requireAuth } from '../middleware/require-auth.js';
@@ -96,7 +101,7 @@ authRouter.post('/refresh', refreshLimiter, async (req, res) => {
   if (!oldRefreshToken || typeof oldRefreshToken !== 'string') {
     rejectRefresh(res);
   }
-  const tokenHash = hashRefreshToken(oldRefreshToken);
+  const tokenHash = hashToken(oldRefreshToken);
   const authRecord = await prisma.refreshToken.findUnique({
     where: { tokenHash },
     include: { user: true },
@@ -146,7 +151,7 @@ authRouter.post('/refresh', refreshLimiter, async (req, res) => {
 authRouter.post('/logout', refreshLimiter, async (req, res) => {
   const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE];
   if (refreshToken && typeof refreshToken === 'string') {
-    const tokenHash = hashRefreshToken(refreshToken);
+    const tokenHash = hashToken(refreshToken);
     const authRecord = await prisma.refreshToken.findUnique({
       where: { tokenHash },
       select: { tokenFamilyId: true },
@@ -168,4 +173,37 @@ authRouter.get('/me', requireAuth, async (req, res) => {
   if (!user || user.deletedAt) throw new AppError('UNAUTHORIZED', 'Invalid access token');
 
   res.json({ user: toAuthUser(user) });
+});
+
+authRouter.post('/setup-password', validateBody(setPasswordSchema), async (req, res) => {
+  const now = new Date();
+  const { token, password } = req.body as SetPasswordInput;
+  const tokenHash = hashToken(token);
+  const record = await prisma.passwordSetupToken.findUnique({
+    where: { tokenHash },
+    include: { user: { select: { deletedAt: true } } },
+  });
+  if (!record || record.expiresAt < now || record.usedAt || record.user.deletedAt)
+    throw new AppError('BAD_REQUEST', 'Invalid or expired link');
+
+  const passwordHash = await hashPassword(password);
+  await prisma.$transaction(async (tx) => {
+    const { count } = await tx.passwordSetupToken.updateMany({
+      where: { tokenHash, usedAt: null },
+      data: { usedAt: now },
+    });
+    if (count === 0) throw new AppError('BAD_REQUEST', 'Invalid or expired link');
+
+    await tx.user.update({
+      where: { id: record.userId },
+      data: { passwordHash },
+    });
+    // invalidate other setup links of this user (re-invite, password reset)
+    await tx.passwordSetupToken.updateMany({
+      where: { userId: record.userId, usedAt: null },
+      data: { usedAt: now },
+    });
+  });
+
+  res.status(204).end();
 });
