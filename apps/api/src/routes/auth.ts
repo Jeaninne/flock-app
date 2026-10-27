@@ -198,7 +198,7 @@ authRouter.post('/setup-password', validateBody(setPasswordSchema), async (req, 
       where: { id: record.userId },
       data: { passwordHash },
     });
-    // cleanup
+    // invalidate other setup links of this user (re-invite, password reset)
     await tx.passwordSetupToken.updateMany({
       where: { userId: record.userId, usedAt: null },
       data: { usedAt: now },

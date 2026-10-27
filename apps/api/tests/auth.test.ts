@@ -11,6 +11,7 @@ let companyId: string;
 const password = 'Password123!';
 const shortPassword = 'a'.repeat(PASSWORD_MIN_LENGTH - 1);
 const longPassword = 'a'.repeat(PASSWORD_MAX_LENGTH + 1);
+const longCyrillicPassword = 'я'.repeat(Math.floor(PASSWORD_MAX_LENGTH / 2) + 9);
 
 async function createUserWithToken(email: string, expiresAt?: Date) {
   const user = await prisma.user.create({
@@ -85,11 +86,14 @@ describe('POST /api/v1/auth/setup-password', () => {
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
-  it('returns 400 if password is too long', async () => {
-    const { token } = await createUserWithToken('dispatcher5@test.example');
+  it.each([
+    ['too long in characters', 'dispatcher5', longPassword],
+    ['too long in bytes (Cyrillic, 2 bytes per letter)', 'dispatcher6', longCyrillicPassword],
+  ])('returns 400 if password is %s', async (_label, email, tooLongPassword) => {
+    const { token } = await createUserWithToken(`${email}@test.example`);
     const res = await request(app)
       .post('/api/v1/auth/setup-password')
-      .send({ token, password: longPassword });
+      .send({ token, password: tooLongPassword });
 
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
